@@ -114,13 +114,13 @@ void Graph::shimbellMethod(int edgeQuantity, bool mode)
 				int currentValue = 0;
 				for (int l = 0; l < m_vertexQuantity; l++)
 				{
-					if (shimbellMatrix.at(j).at(l) != 0 && shimbellMatrix.at(l).at(k) != 0)
+					if (shimbellMatrix.at(j).at(l) != 0 && m_matrix.at(l).at(k) != 0)
 					{
-						if (currentValue == 0) currentValue = shimbellMatrix.at(j).at(l) + shimbellMatrix.at(l).at(k);
+						if (currentValue == 0) currentValue = shimbellMatrix.at(j).at(l) + m_matrix.at(l).at(k);
 						else
 						{
-							if (mode) currentValue = std::min(currentValue, shimbellMatrix.at(j).at(l) + shimbellMatrix.at(l).at(k));
-							else currentValue = std::max(currentValue, shimbellMatrix.at(j).at(l) + shimbellMatrix.at(l).at(k));
+							if (mode) currentValue = std::min(currentValue, shimbellMatrix.at(j).at(l) + m_matrix.at(l).at(k));
+							else currentValue = std::max(currentValue, shimbellMatrix.at(j).at(l) + m_matrix.at(l).at(k));
 						}
 					}
 				}
@@ -133,10 +133,32 @@ void Graph::shimbellMethod(int edgeQuantity, bool mode)
 	showMatrix(shimbellMatrix);
 }
 
+int Graph::dfs(int firstVertex, int secondVertex)
+{
+	int count = 0;
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		if (m_matrix.at(firstVertex).at(i) != 0)
+		{
+			if (i != secondVertex) count += dfs(i, secondVertex);
+			else count++;
+		}
+	}
+	return count;
+}
+
 void Graph::Start()
 {
 	// Add Checks for shimbell input
 	showMatrix(m_matrix);
 	shimbellMethod(2, true);
-	shimbellMethod(4, true);
+	shimbellMethod(3, true);
+	while (true)
+	{
+		int first;
+		int second;
+		std::cin >> first >> second;
+		if (first == -1) break;
+		std::cout << dfs(first, second);
+	}
 }
