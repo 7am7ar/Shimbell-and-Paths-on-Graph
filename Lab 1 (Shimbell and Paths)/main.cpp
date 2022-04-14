@@ -3,7 +3,6 @@
 int main()
 {
 	Graph test;
-	test.ShowMatrix();
-
+	test.Start();
 	return 0;
 }
