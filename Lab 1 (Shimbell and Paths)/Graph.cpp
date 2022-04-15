@@ -85,6 +85,16 @@ Graph::Graph()
 		m_matrix.push_back(temp);
 	}
 	m_matrix.at(m_vertexQuantity - 2).at(m_vertexQuantity - 1) = 1;
+
+	//Calculating weights for edges
+	m_weightedMatrix = m_matrix;
+	for (int i = 0; i < m_weightedMatrix.size(); i++)
+	{
+		for (int j = 0; j < m_weightedMatrix.at(i).size(); j++)
+		{
+			if (m_weightedMatrix.at(i).at(j) == 1) m_weightedMatrix.at(i).at(j) = (mersenne() % 100) + 1;
+		}
+	}
 }
 
 void Graph::showMatrix(std::vector<std::vector<int>>& matrix)
@@ -100,9 +110,27 @@ void Graph::showMatrix(std::vector<std::vector<int>>& matrix)
 	}
 }
 
+void Graph::showWeights(std::vector<std::vector<int>>& matrix)
+{
+	bool isEmpty = true;
+	std::cout << '\n';
+	for (int i = 0; i < matrix.size(); i++)
+	{
+		for (int j = 0; j < matrix.at(i).size(); j++)
+		{
+			if (matrix.at(i).at(j))
+			{
+				isEmpty = false;
+				std::cout << i << "-->" << j << " Weight: " << matrix.at(i).at(j) << "\n";
+			}
+		}
+	}
+	if (isEmpty) std::cout << "There are no paths.";
+}
+
 void Graph::shimbellMethod(int edgeQuantity, bool mode)
 {
-	auto shimbellMatrix = m_matrix;
+	auto shimbellMatrix = m_weightedMatrix;
 	auto tempMatrix = shimbellMatrix;
 
 	for (int i = 0; i < edgeQuantity - 1; i++)
@@ -114,13 +142,13 @@ void Graph::shimbellMethod(int edgeQuantity, bool mode)
 				int currentValue = 0;
 				for (int l = 0; l < m_vertexQuantity; l++)
 				{
-					if (shimbellMatrix.at(j).at(l) != 0 && m_matrix.at(l).at(k) != 0)
+					if (shimbellMatrix.at(j).at(l) != 0 && m_weightedMatrix.at(l).at(k) != 0)
 					{
-						if (currentValue == 0) currentValue = shimbellMatrix.at(j).at(l) + m_matrix.at(l).at(k);
+						if (currentValue == 0) currentValue = shimbellMatrix.at(j).at(l) + m_weightedMatrix.at(l).at(k);
 						else
 						{
-							if (mode) currentValue = std::min(currentValue, shimbellMatrix.at(j).at(l) + m_matrix.at(l).at(k));
-							else currentValue = std::max(currentValue, shimbellMatrix.at(j).at(l) + m_matrix.at(l).at(k));
+							if (mode) currentValue = std::min(currentValue, shimbellMatrix.at(j).at(l) + m_weightedMatrix.at(l).at(k));
+							else currentValue = std::max(currentValue, shimbellMatrix.at(j).at(l) + m_weightedMatrix.at(l).at(k));
 						}
 					}
 				}
@@ -130,7 +158,7 @@ void Graph::shimbellMethod(int edgeQuantity, bool mode)
 		shimbellMatrix = tempMatrix;
 	}
 
-	showMatrix(shimbellMatrix);
+	showWeights(shimbellMatrix);
 }
 
 int Graph::dfs(int firstVertex, int secondVertex)
@@ -151,6 +179,7 @@ void Graph::Start()
 {
 	// Add Checks for shimbell input
 	showMatrix(m_matrix);
+	showWeights(m_weightedMatrix);
 	shimbellMethod(2, true);
 	shimbellMethod(3, true);
 	while (true)
