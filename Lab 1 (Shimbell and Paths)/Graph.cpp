@@ -6,6 +6,8 @@
 #include <random>
 #include <ctime>
 #include <set>
+#include <queue>
+#include <deque>
 
 #define stop __asm nop
 
@@ -175,19 +177,90 @@ int Graph::dfs(int firstVertex, int secondVertex)
 	return count;
 }
 
+int Graph::dijkstra(int startVertex)
+{
+	// Create start position
+	std::vector<int> marks(m_vertexQuantity, INT_MAX);
+	marks[startVertex] = 0;
+	std::vector<int> isVisited(m_vertexQuantity, false);
+	std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> queue;
+	queue.push(std::make_pair(0, startVertex));
+	int iterationCounter = 0;
+
+	// Algorithm
+	while (!queue.empty())
+	{
+		auto currentVertex = queue.top();
+		queue.pop();
+		isVisited[currentVertex.second] = true;
+		for (int i = 0; i < m_vertexQuantity; i++)
+		{
+			iterationCounter++;
+			if (m_weightedMatrix[currentVertex.second][i] != 0 && !(isVisited[i]))
+			{
+				if (marks[i] > marks[currentVertex.second] + m_weightedMatrix[currentVertex.second][i])
+				{
+					marks[i] = marks[currentVertex.second] + m_weightedMatrix[currentVertex.second][i];
+					queue.push(std::make_pair(marks[i], i));
+				}
+			}
+		}
+	}
+
+	//Output marks
+	std::cout << "Dijkstra results:\n";
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		std::cout << startVertex << "-->" << i << " Shortest path length: ";
+		if (marks[i] == INT_MAX) std::cout << "infinity";
+		else std::cout << marks[i];
+		std::cout << '\n';
+	}
+	return iterationCounter;
+}
+
+int Graph::bellmanFord(int startVertex)
+{
+	std::vector<int> marks(m_vertexQuantity, INT_MAX);
+	marks[startVertex] = 0;
+	std::deque<std::pair<int, int>> queue;
+	queue.push_back(std::make_pair(0, startVertex));
+
+	while (!queue.empty())
+	{
+		auto currentVertex = queue[0];
+		queue.pop_front();
+
+		for (int i = 0; i < m_vertexQuantity; i++)
+		{
+			if (m_weightedMatrix[currentVertex.second][i] != 0)
+			{
+				if (marks[i] > marks[currentVertex.second] + m_weightedMatrix[currentVertex.second][i])
+				{
+					marks[i] = marks[currentVertex.second] + m_weightedMatrix[currentVertex.second][i];
+				}
+			}
+		}
+	}
+}
+
 void Graph::Start()
 {
 	// Add Checks for shimbell input
 	showMatrix(m_matrix);
 	showWeights(m_weightedMatrix);
-	shimbellMethod(2, true);
-	shimbellMethod(3, true);
+	//shimbellMethod(2, true);
+	//shimbellMethod(3, true);
 	while (true)
 	{
-		int first;
+	/*	int first;
 		int second;
 		std::cin >> first >> second;
 		if (first == -1) break;
-		std::cout << dfs(first, second);
+		std::cout << dfs(first, second);*/
+		int vertex = 0;
+		std::cin >> vertex;
+		if (vertex == -1) break;
+		dijkstra(vertex);
 	}
 }
