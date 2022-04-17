@@ -221,27 +221,114 @@ int Graph::dijkstra(int startVertex)
 
 int Graph::bellmanFord(int startVertex)
 {
+	//Create start position
 	std::vector<int> marks(m_vertexQuantity, INT_MAX);
+	std::vector<bool> isAppearedInQueue(m_vertexQuantity, false);
+	std::vector<bool> isInQueue(m_vertexQuantity, false);
 	marks[startVertex] = 0;
+	isAppearedInQueue[startVertex] = true;
 	std::deque<std::pair<int, int>> queue;
 	queue.push_back(std::make_pair(0, startVertex));
+	int iterationCounter = 0;
 
+	//Algorithm
 	while (!queue.empty())
 	{
 		auto currentVertex = queue[0];
 		queue.pop_front();
+		isInQueue[currentVertex.second] = false;
 
 		for (int i = 0; i < m_vertexQuantity; i++)
 		{
+			iterationCounter++;
 			if (m_weightedMatrix[currentVertex.second][i] != 0)
 			{
 				if (marks[i] > marks[currentVertex.second] + m_weightedMatrix[currentVertex.second][i])
 				{
 					marks[i] = marks[currentVertex.second] + m_weightedMatrix[currentVertex.second][i];
+					if (isAppearedInQueue[i])
+					{
+						if (isInQueue[i])
+						{
+							for (auto j = queue.begin(); j != queue.end(); j++)
+							{
+								if ((*j).second == i)
+								{
+									queue.erase(j);
+									break;
+								}
+							}
+						}
+						queue.push_front(std::make_pair(marks[i], i));
+					}
+					else
+					{
+						queue.push_back(std::make_pair(marks[i], i));
+					}
+					isAppearedInQueue[i] = true;
+					isInQueue[i] = true;
 				}
 			}
 		}
 	}
+
+	//Output marks
+	std::cout << "Bellman-Ford results:\n";
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		std::cout << startVertex << "-->" << i << " Shortest path length: ";
+		if (marks[i] == INT_MAX) std::cout << "infinity";
+		else std::cout << marks[i];
+		std::cout << '\n';
+	}
+	return iterationCounter;
+}
+
+int Graph::floydWarshall(int startVertex)
+{
+	int iterationCounter = 0;
+	std::vector<std::vector<int>> distance;
+	distance = m_weightedMatrix;
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		for (int j = 0; j < m_vertexQuantity; j++)
+		{
+			if (j == i) distance[i][j];
+			else if (distance[i][j] == 0) distance[i][j] = INT_MAX;
+		}
+	}
+
+	for (int k = 0; k < m_vertexQuantity; k++)
+	{
+		for (int i = 0; i < m_vertexQuantity; i++)
+		{
+			for (int j = 0; j < m_vertexQuantity; j++)
+			{
+				iterationCounter++;
+				if (distance[i][k] != INT_MAX && distance[k][j] != INT_MAX)
+				{
+					if (distance[i][j] > distance[i][k] + distance[k][j])
+					{
+						distance[i][j] = distance[i][k] + distance[k][j];
+					}
+				}
+			}
+		}
+	}
+
+	//Output distance
+	std::cout << "Floyd-Warshall results:\n";
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		for (int j = 0; j < m_vertexQuantity; j++)
+		{
+			std::cout << j << "-->" << i << " Shortest path length: ";
+			if (distance[i][j] == INT_MAX) std::cout << "infinity";
+			else std::cout << distance[i][j];
+			std::cout << '\n';
+		}
+	}
+	return iterationCounter;
 }
 
 void Graph::Start()
@@ -261,6 +348,8 @@ void Graph::Start()
 		int vertex = 0;
 		std::cin >> vertex;
 		if (vertex == -1) break;
-		dijkstra(vertex);
+		std::cout << '\n' << dijkstra(vertex) << '\n';
+		std::cout << '\n' << bellmanFord(vertex);
+		std::cout << '\n' << floydWarshall(vertex);
 	}
 }
