@@ -1,5 +1,6 @@
 #include "Graph.h"
 #include "Constants.h"
+#include "GlobalFunctions.h"
 
 #include <iostream>
 #include <algorithm>
@@ -13,8 +14,25 @@
 
 Graph::Graph()
 {
-	std::cin >> m_vertexQuantity;
-	//Add checks for input
+	std::string input;
+	bool isAssigned = false;
+	while (!isAssigned)
+	{
+		std::cout << "Enter the number of vertexes:\n";
+		std::cin >> input;
+		if (IsOnlyDigits(input) && std::stoi(input) > 0) isAssigned = true;
+		else std::cout << "Number is incorrect.\n";
+	}
+	createGraph(std::stoi(input));
+}
+
+void Graph::createGraph(int vertexQuantity)
+{
+	// Delete the previous graph
+	m_matrix.clear();
+	m_weightedMatrix.clear();
+	m_outdegrees.clear();
+	m_vertexQuantity = vertexQuantity;
 
 	//Calculate value of p0
 	double p0 = 1;
@@ -89,15 +107,32 @@ Graph::Graph()
 	m_matrix.at(m_vertexQuantity - 2).at(m_vertexQuantity - 1) = 1;
 
 	//Calculating weights for edges
+	std::string input;
+	bool isAssigned = false;
+	std::cout << "0. Only positive weights.\n";
+	std::cout << "1. Only negative weights.\n";
+	std::cout << "2. Mixed weights.\n";
+
+	while (!isAssigned)
+	{
+		std::cout << "Enter the option number:\n";
+		std::cin >> input;
+		if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 2) isAssigned = true;
+		else std::cout << "Number is incorrect.\n";
+	}
+	m_mode = std::stoi(input);
 	m_weightedMatrix = m_matrix;
 	for (int i = 0; i < m_weightedMatrix.size(); i++)
 	{
 		for (int j = 0; j < m_weightedMatrix.at(i).size(); j++)
 		{
 			if (m_weightedMatrix.at(i).at(j) == 1) m_weightedMatrix.at(i).at(j) = (mersenne() % 100) + 1;
+			if (m_mode == 1) m_weightedMatrix.at(i).at(j) *= -1;
+			if (m_mode == 2) m_weightedMatrix.at(i).at(j) *= std::pow(-1, mersenne() % 2);
 		}
 	}
 }
+
 
 void Graph::showMatrix(std::vector<std::vector<int>>& matrix)
 {
@@ -106,7 +141,7 @@ void Graph::showMatrix(std::vector<std::vector<int>>& matrix)
 	{
 		for (int j = 0; j < matrix.at(i).size(); j++)
 		{
-			std::cout << matrix.at(i).at(j) << ' ';
+			std::cout << matrix.at(i).at(j) << '\t';
 		}
 		std::cout << '\n';
 	}
@@ -160,6 +195,7 @@ void Graph::shimbellMethod(int edgeQuantity, bool mode)
 		shimbellMatrix = tempMatrix;
 	}
 
+	std::cout << "Shimbell method results:\n";
 	showWeights(shimbellMatrix);
 }
 
@@ -322,34 +358,189 @@ int Graph::floydWarshall(int startVertex)
 	{
 		for (int j = 0; j < m_vertexQuantity; j++)
 		{
-			std::cout << j << "-->" << i << " Shortest path length: ";
-			if (distance[i][j] == INT_MAX) std::cout << "infinity";
+			if (distance[i][j] == INT_MAX) std::cout << "inf";
 			else std::cout << distance[i][j];
-			std::cout << '\n';
+			std::cout << '\t';
 		}
+		std::cout << '\n';
 	}
 	return iterationCounter;
 }
 
 void Graph::Start()
 {
-	// Add Checks for shimbell input
+	std::cout << "Matrix without weights:\n";
 	showMatrix(m_matrix);
-	showWeights(m_weightedMatrix);
-	//shimbellMethod(2, true);
-	//shimbellMethod(3, true);
+	std::cout << '\n';
+	std::cout << "Matrix with weights:\n";
+	showMatrix(m_weightedMatrix);
+	std::cout << '\n';
+
 	while (true)
 	{
-	/*	int first;
-		int second;
-		std::cin >> first >> second;
-		if (first == -1) break;
-		std::cout << dfs(first, second);*/
-		int vertex = 0;
-		std::cin >> vertex;
-		if (vertex == -1) break;
-		std::cout << '\n' << dijkstra(vertex) << '\n';
-		std::cout << '\n' << bellmanFord(vertex);
-		std::cout << '\n' << floydWarshall(vertex);
+		std::cout << "0. Show matrix without weights.\n";
+		std::cout << "1. Show table of weighted edges.\n";
+		std::cout << "2. Run Shimbell Method.\n";
+		std::cout << "3. Show quantity of paths between two vertexes.\n";
+		std::cout << "4. Run Dijkstra's Algorithm.\n";
+		std::cout << "5. Run Bellman-Ford's Algorithm.\n";
+		std::cout << "6. Run Floyd-Warshall's Algorithm.\n";
+		std::cout << "7. Show matrix with weights.\n";
+		std::cout << "8. Recreate the graph.\n";
+		std::cout << "9. End the program.\n";
+
+		std::string input;
+		int operationNumber;
+		bool isAssigned = false;
+
+		while (!isAssigned)
+		{
+			std::cout << "Enter the operation number:\n";
+			std::cin >> input;
+			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 9)
+			{
+				operationNumber = std::stoi(input);
+				isAssigned = true;
+			}
+			else std::cout << "Number is incorrect.\n";
+		}
+		switch (operationNumber)
+		{
+		case 0:
+			showMatrix(m_matrix);
+			std::cout << '\n';
+			break;
+		case 1:
+			showWeights(m_weightedMatrix);
+			std::cout << '\n';
+			break;
+		case 2:
+			{
+				int numberOfEdges;
+				bool isAssigned = false;
+				while (!isAssigned)
+				{
+					std::cout << "Enter the number of edges in path:\n";
+					std::cin >> input;
+					if (IsOnlyDigits(input) && std::stoi(input) > 0 && std::stoi(input) < m_vertexQuantity)
+					{
+						numberOfEdges = std::stoi(input);
+						isAssigned = true;
+					}
+					else std::cout << "Number is incorrect.\n";
+				}
+				isAssigned = false;
+				while (!isAssigned)
+				{
+					std::cout << "0. Find the longest paths.\n";
+					std::cout << "1. Find the shortest paths.\n";
+					std::cout << "Enter the number of setting:\n";
+					std::cin >> input;
+					if (IsOnlyDigits(input) && (std::stoi(input) == 1 || std::stoi(input) == 0))
+					{
+						shimbellMethod(numberOfEdges, std::stoi(input));
+						break;
+					}
+					else std::cout << "Number is incorrect.\n";
+				}
+			}
+			break;
+		case 3:
+			{
+				int startVertex;
+				bool isAssigned = false;
+				while (!isAssigned)
+				{
+					std::cout << "Enter the number of first vertex:\n";
+					std::cin >> input;
+					if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) < m_vertexQuantity)
+					{
+						startVertex = std::stoi(input);
+						isAssigned = true;
+					}
+					else std::cout << "Number is incorrect.\n";
+				}
+				isAssigned = false;
+				while (!isAssigned)
+				{
+					std::cout << "Enter the number of second vertex:\n";
+					std::cin >> input;
+					if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) < m_vertexQuantity)
+					{
+						std::cout << "Quantity of possible paths: " << dfs(startVertex, std::stoi(input)) << '\n';
+						break;
+					}
+					else std::cout << "Number is incorrect.\n";
+				}
+			}
+			break;
+		case 4:
+			{
+				if (m_mode != 0)
+				{
+					std::cout << "Dijkstra's algorithm can't be runned in graph with negative weights.\n";
+					break;
+				}
+				bool isAssigned = false;
+				while (!isAssigned)
+				{
+					std::cout << "Enter the number of starting vertex:\n";
+					std::cin >> input;
+					if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) < m_vertexQuantity)
+					{
+						std::cout << "\nNumber of iterations: " << dijkstra(std::stoi(input)) << '\n';
+						break;
+					}
+					else std::cout << "Number is incorrect.\n";
+				}
+			}
+		break;
+		case 5:
+			{
+				bool isAssigned = false;
+				while (!isAssigned)
+				{
+					std::cout << "Enter the number of starting vertex:\n";
+					std::cin >> input;
+					if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) < m_vertexQuantity)
+					{
+						std::cout << "\nNumber of iterations: " << bellmanFord(std::stoi(input)) << '\n';
+						break;
+					}
+					else std::cout << "Number is incorrect.\n";
+				}
+			}
+			break;
+		case 6:
+			floydWarshall(0);
+			break;
+		case 7:
+			showMatrix(m_weightedMatrix);
+			std::cout << '\n';
+			break;
+		case 8:
+			{
+				std::string input;
+				bool isAssigned = false;
+				while (!isAssigned)
+				{
+					std::cout << "Enter the number of vertexes:\n";
+					std::cin >> input;
+					if (IsOnlyDigits(input) && std::stoi(input) > 0) isAssigned = true;
+					else std::cout << "Number is incorrect.\n";
+				}
+				createGraph(std::stoi(input));
+			}
+			std::cout << "Matrix without weights:\n";
+			showMatrix(m_matrix);
+			std::cout << '\n';
+			std::cout << "Matrix with weights:\n";
+			showMatrix(m_weightedMatrix);
+			std::cout << '\n';
+			break;
+		case 9:
+			return;
+		}
 	}
+
 }
