@@ -26,6 +26,22 @@ Graph::Graph()
 	createGraph(std::stoi(input));
 }
 
+void Graph::createShit()
+{
+	m_matrix.clear();
+	m_weightedMatrix.clear();
+	m_outdegrees.clear();
+	m_vertexQuantity = 4;
+	std::vector<int> one = { 0, 1000, 1000, 0 };
+	std::vector<int> two = { 0, 0, 1, 1000 };
+	std::vector<int> three = { 0, 0, 0, 1000 };
+	std::vector<int> four = { 0, 0, 0, 0};
+	m_weightedMatrix.push_back(one);
+	m_weightedMatrix.push_back(two);
+	m_weightedMatrix.push_back(three);
+	m_weightedMatrix.push_back(four);
+}
+
 void Graph::createGraph(int vertexQuantity)
 {
 	// Delete the previous graph
@@ -243,16 +259,42 @@ int Graph::dijkstra(int startVertex)
 		}
 	}
 
-	//Output marks
+	//Output paths
 	std::cout << "Dijkstra results:\n";
 	for (int i = 0; i < m_vertexQuantity; i++)
 	{
-		std::cout << startVertex << "-->" << i << " Shortest path length: ";
-		if (marks[i] == INT_MAX) std::cout << "infinity";
-		else std::cout << marks[i];
-		std::cout << '\n';
+		std::vector<int> path;
+		if (marks[i] == INT_MAX) std::cout << startVertex << "-->" << i << " Shortest path length: " << "infinity" << '\n';
+		else
+		{
+			findPath(path, startVertex, marks, i);
+			std::cout << startVertex;
+			while (!path.empty())
+			{
+				std::cout << "-->" << *(path.end() - 1);
+				path.pop_back();
+			}
+			std::cout << "-->" << i << " Shortest path length: " << marks[i] << '\n';
+		}
 	}
 	return iterationCounter;
+}
+
+bool Graph::findPath(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex)
+{
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		if (marks[i] + m_weightedMatrix[i][finalVertex] == marks[finalVertex])
+		{
+			if (startVertex == i) return true;
+			path.push_back(i);
+			if (findPath(path, startVertex, marks, i))
+			{
+				return true;
+			}
+			else path.pop_back();
+		}
+	}
 }
 
 int Graph::bellmanFord(int startVertex)
@@ -312,10 +354,19 @@ int Graph::bellmanFord(int startVertex)
 	std::cout << "Bellman-Ford results:\n";
 	for (int i = 0; i < m_vertexQuantity; i++)
 	{
-		std::cout << startVertex << "-->" << i << " Shortest path length: ";
-		if (marks[i] == INT_MAX) std::cout << "infinity";
-		else std::cout << marks[i];
-		std::cout << '\n';
+		std::vector<int> path;
+		if (marks[i] == INT_MAX) std::cout << startVertex << "-->" << i << " Shortest path length: " << "infinity" << '\n';
+		else
+		{
+			findPath(path, startVertex, marks, i);
+			std::cout << startVertex;
+			while (!path.empty())
+			{
+				std::cout << "-->" << *(path.end() - 1);
+				path.pop_back();
+			}
+			std::cout << "-->" << i << " Shortest path length: " << marks[i] << '\n';
+		}
 	}
 	return iterationCounter;
 }
@@ -367,6 +418,62 @@ int Graph::floydWarshall(int startVertex)
 	return iterationCounter;
 }
 
+bool Graph::dfsFordFulkerson(std::vector<std::vector<int>>& graph, std::vector<int>& currentPath, int startVertex)
+{
+	bool result = false;
+
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		if (graph[startVertex][i] > 0)
+		{
+			currentPath.push_back(i);
+			if (i == m_vertexQuantity - 1) return true;
+			result = dfsFordFulkerson(graph, currentPath, i);
+			if (result == false) currentPath.pop_back();
+			else return true;
+		}
+	}
+	return false;
+}
+
+void Graph::fordFulkerson(int startVertex)
+{
+	std::vector<std::vector<int>> streamMatrix(m_vertexQuantity, std::vector<int>(m_vertexQuantity, 0));
+	auto bandwidthMatrix = m_weightedMatrix;
+	std::vector<int> currentPath;
+	currentPath.push_back(startVertex);
+
+	//Find path or not find
+	bool result = dfsFordFulkerson(bandwidthMatrix, currentPath, startVertex);;
+
+	while (result)
+	{
+		int minWeight = INT_MAX;
+		//Find minimum weight in path
+		for (int i = 0; i < currentPath.size() - 1; i++)
+		{
+			if (bandwidthMatrix[currentPath[i]][currentPath[i + 1]] < minWeight)
+				minWeight = bandwidthMatrix[currentPath[i]][currentPath[i + 1]];
+		}
+
+		//Change matrixes
+		for (int i = 0; i < currentPath.size() - 1; i++)
+		{
+			bandwidthMatrix[currentPath[i]][currentPath[i + 1]] -= minWeight;
+			bandwidthMatrix[currentPath[i + 1]][currentPath[i]] -= minWeight;
+			streamMatrix[currentPath[i]][currentPath[i + 1]] += minWeight;
+		}
+		//Find next path
+		currentPath.clear();
+		currentPath.push_back(startVertex);
+		result = dfsFordFulkerson(bandwidthMatrix, currentPath, startVertex);
+	}
+
+	//Output stream values
+	std::cout << "Ford-Fulkerson results: ";
+	showMatrix(streamMatrix);
+}
+
 void Graph::Start()
 {
 	std::cout << "Matrix without weights:\n";
@@ -387,7 +494,8 @@ void Graph::Start()
 		std::cout << "6. Run Floyd-Warshall's Algorithm.\n";
 		std::cout << "7. Show matrix with weights.\n";
 		std::cout << "8. Recreate the graph.\n";
-		std::cout << "9. End the program.\n";
+		std::cout << "9. Run Ford-Falkerson's Algotithm.\n";
+		std::cout << "10. End the program.\n";
 
 		std::string input;
 		int operationNumber;
@@ -397,7 +505,7 @@ void Graph::Start()
 		{
 			std::cout << "Enter the operation number:\n";
 			std::cin >> input;
-			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 9)
+			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 11)
 			{
 				operationNumber = std::stoi(input);
 				isAssigned = true;
@@ -539,8 +647,26 @@ void Graph::Start()
 			std::cout << '\n';
 			break;
 		case 9:
+			{
+				bool isAssigned = false;
+				while (!isAssigned)
+				{
+					std::cout << "Enter the number of starting vertex:\n";
+					std::cin >> input;
+					if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) < m_vertexQuantity)
+					{
+						fordFulkerson(std::stoi(input));
+						break;
+					}
+					else std::cout << "Number is incorrect.\n";
+				}
+			}
+			break;
+		case 10:
 			return;
+		case 11:
+			createShit();
+			break;
 		}
 	}
-
 }

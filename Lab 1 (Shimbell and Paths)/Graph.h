@@ -15,6 +15,10 @@ private:
 	void showMatrix(std::vector<std::vector<int>>& matrix);
 	void showWeights(std::vector<std::vector<int>>& matrix);
 	int dfs(int firstVertex, int secondVertex);
+	bool dfsFordFulkerson(std::vector<std::vector<int>>& graph, std::vector<int>& currentPath, int startVertex);
+	void fordFulkerson(int startVertex);
+	void createShit();
+	bool findPath(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex);
 
 	int m_vertexQuantity;
 	int m_mode;
