@@ -30,16 +30,17 @@ void Graph::createShit()
 {
 	m_matrix.clear();
 	m_weightedMatrix.clear();
+	m_bandwidthMatrix.clear();
 	m_outdegrees.clear();
 	m_vertexQuantity = 4;
-	std::vector<int> one = { 0, 1000, 1000, 0 };
-	std::vector<int> two = { 0, 0, 1, 1000 };
-	std::vector<int> three = { 0, 0, 0, 1000 };
+	std::vector<int> one = { 0, 4, 4, 0 };
+	std::vector<int> two = { 0, 0, 2, 4 };
+	std::vector<int> three = { 0, 0, 0, 4 };
 	std::vector<int> four = { 0, 0, 0, 0};
-	m_weightedMatrix.push_back(one);
-	m_weightedMatrix.push_back(two);
-	m_weightedMatrix.push_back(three);
-	m_weightedMatrix.push_back(four);
+	m_bandwidthMatrix.push_back(one);
+	m_bandwidthMatrix.push_back(two);
+	m_bandwidthMatrix.push_back(three);
+	m_bandwidthMatrix.push_back(four);
 }
 
 void Graph::createGraph(int vertexQuantity)
@@ -47,6 +48,7 @@ void Graph::createGraph(int vertexQuantity)
 	// Delete the previous graph
 	m_matrix.clear();
 	m_weightedMatrix.clear();
+	m_bandwidthMatrix.clear();
 	m_outdegrees.clear();
 	m_vertexQuantity = vertexQuantity;
 
@@ -145,6 +147,16 @@ void Graph::createGraph(int vertexQuantity)
 			if (m_weightedMatrix.at(i).at(j) == 1) m_weightedMatrix.at(i).at(j) = (mersenne() % 100) + 1;
 			if (m_mode == 1) m_weightedMatrix.at(i).at(j) *= -1;
 			if (m_mode == 2) m_weightedMatrix.at(i).at(j) *= std::pow(-1, mersenne() % 2);
+		}
+	}
+
+	//Calculate bandwidth
+	m_bandwidthMatrix = m_matrix;
+	for (int i = 0; i < m_bandwidthMatrix.size(); i++)
+	{
+		for (int j = 0; j < m_bandwidthMatrix.at(i).size(); j++)
+		{
+			if (m_bandwidthMatrix.at(i).at(j) == 1) m_bandwidthMatrix.at(i).at(j) = (mersenne() % 1000) + 1;
 		}
 	}
 }
@@ -418,18 +430,23 @@ int Graph::floydWarshall(int startVertex)
 	return iterationCounter;
 }
 
-bool Graph::dfsFordFulkerson(std::vector<std::vector<int>>& graph, std::vector<int>& currentPath, int startVertex)
+bool Graph::dfsFordFulkerson(std::vector<std::vector<int>>& graph, std::vector<int>& currentPath, int startVertex, std::vector<bool>& isVisited)
 {
 	bool result = false;
 
 	for (int i = 0; i < m_vertexQuantity; i++)
 	{
-		if (graph[startVertex][i] > 0)
+		if (graph[startVertex][i] > 0 && isVisited[i] == false)
 		{
 			currentPath.push_back(i);
+			isVisited[startVertex] = true;
 			if (i == m_vertexQuantity - 1) return true;
-			result = dfsFordFulkerson(graph, currentPath, i);
-			if (result == false) currentPath.pop_back();
+			result = dfsFordFulkerson(graph, currentPath, i, isVisited);
+			if (result == false)
+			{
+				currentPath.pop_back();
+				isVisited[startVertex] = false;
+			}
 			else return true;
 		}
 	}
@@ -438,17 +455,20 @@ bool Graph::dfsFordFulkerson(std::vector<std::vector<int>>& graph, std::vector<i
 
 void Graph::fordFulkerson(int startVertex)
 {
+	std::cout << "Bandwidth matrix:";
+	showMatrix(m_bandwidthMatrix);
+	std::cout << '\n';
+
 	std::vector<std::vector<int>> streamMatrix(m_vertexQuantity, std::vector<int>(m_vertexQuantity, 0));
-	auto bandwidthMatrix = m_weightedMatrix;
 	std::vector<int> currentPath;
+	std::vector<bool> isVisited(m_vertexQuantity, false);
 	currentPath.push_back(startVertex);
+	auto bandwidthMatrix = m_bandwidthMatrix;
 
-	//Find path or not find
-	bool result = dfsFordFulkerson(bandwidthMatrix, currentPath, startVertex);;
-
-	while (result)
+	while (dfsFordFulkerson(bandwidthMatrix, currentPath, startVertex, isVisited))
 	{
 		int minWeight = INT_MAX;
+		
 		//Find minimum weight in path
 		for (int i = 0; i < currentPath.size() - 1; i++)
 		{
@@ -460,18 +480,24 @@ void Graph::fordFulkerson(int startVertex)
 		for (int i = 0; i < currentPath.size() - 1; i++)
 		{
 			bandwidthMatrix[currentPath[i]][currentPath[i + 1]] -= minWeight;
-			bandwidthMatrix[currentPath[i + 1]][currentPath[i]] -= minWeight;
-			streamMatrix[currentPath[i]][currentPath[i + 1]] += minWeight;
+			bandwidthMatrix[currentPath[i + 1]][currentPath[i]] += minWeight;
+
+			if (currentPath[i] < currentPath[i + 1]) 
+				streamMatrix[currentPath[i]][currentPath[i + 1]] += minWeight;
+			if ((streamMatrix[currentPath[i + 1]][currentPath[i]] - minWeight) >= 0) 
+				streamMatrix[currentPath[i + 1]][currentPath[i]] -= minWeight;
 		}
+
 		//Find next path
 		currentPath.clear();
 		currentPath.push_back(startVertex);
-		result = dfsFordFulkerson(bandwidthMatrix, currentPath, startVertex);
+		for (int i = 0; i < m_vertexQuantity; i++) isVisited[i] = false;
 	}
 
 	//Output stream values
 	std::cout << "Ford-Fulkerson results: ";
 	showMatrix(streamMatrix);
+	std::cout << '\n';
 }
 
 void Graph::Start()

@@ -15,7 +15,7 @@ private:
 	void showMatrix(std::vector<std::vector<int>>& matrix);
 	void showWeights(std::vector<std::vector<int>>& matrix);
 	int dfs(int firstVertex, int secondVertex);
-	bool dfsFordFulkerson(std::vector<std::vector<int>>& graph, std::vector<int>& currentPath, int startVertex);
+	bool dfsFordFulkerson(std::vector<std::vector<int>>& graph, std::vector<int>& currentPath, int startVertex, std::vector<bool>& isVisited);
 	void fordFulkerson(int startVertex);
 	void createShit();
 	bool findPath(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex);
@@ -24,5 +24,6 @@ private:
 	int m_mode;
 	std::vector<std::vector<int>> m_matrix;
 	std::vector<std::vector<int>> m_weightedMatrix;
+	std::vector<std::vector<int>> m_bandwidthMatrix;
 	std::vector<int> m_outdegrees;
 };
