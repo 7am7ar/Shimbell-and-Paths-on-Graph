@@ -16,9 +16,14 @@ private:
 	void showWeights(std::vector<std::vector<int>>& matrix);
 	int dfs(int firstVertex, int secondVertex);
 	bool dfsFordFulkerson(std::vector<std::vector<int>>& graph, std::vector<int>& currentPath, int startVertex, std::vector<bool>& isVisited);
-	void fordFulkerson(int startVertex);
+	int fordFulkerson(int startVertex);
+	int minCostFlow(int startVertex, int streamSize);
+public:
+	bool bellmanFordForFlow(int startVertex, std::vector<std::vector<int>>& graph, std::vector<int>& path);
+private:
 	void createShit();
 	bool findPath(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex);
+	bool findPathForFlow(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex, std::vector<std::vector<int>>& graph);
 
 	int m_vertexQuantity;
 	int m_mode;

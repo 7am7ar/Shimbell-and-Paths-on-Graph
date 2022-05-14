@@ -20,7 +20,7 @@ Graph::Graph()
 	{
 		std::cout << "Enter the number of vertexes:\n";
 		std::cin >> input;
-		if (IsOnlyDigits(input) && std::stoi(input) > 0) isAssigned = true;
+		if (IsOnlyDigits(input) && std::stoi(input) > 1) isAssigned = true;
 		else std::cout << "Number is incorrect.\n";
 	}
 	createGraph(std::stoi(input));
@@ -296,7 +296,7 @@ bool Graph::findPath(std::vector<int>& path, int startVertex, std::vector<int>& 
 {
 	for (int i = 0; i < m_vertexQuantity; i++)
 	{
-		if (marks[i] + m_weightedMatrix[i][finalVertex] == marks[finalVertex])
+		if (marks[i] + m_weightedMatrix[i][finalVertex] == marks[finalVertex] && m_weightedMatrix[i][finalVertex] != 0)
 		{
 			if (startVertex == i) return true;
 			path.push_back(i);
@@ -453,12 +453,13 @@ bool Graph::dfsFordFulkerson(std::vector<std::vector<int>>& graph, std::vector<i
 	return false;
 }
 
-void Graph::fordFulkerson(int startVertex)
+int Graph::fordFulkerson(int startVertex)
 {
 	std::cout << "Bandwidth matrix:";
 	showMatrix(m_bandwidthMatrix);
 	std::cout << '\n';
 
+	int streamValue = 0;
 	std::vector<std::vector<int>> streamMatrix(m_vertexQuantity, std::vector<int>(m_vertexQuantity, 0));
 	std::vector<int> currentPath;
 	std::vector<bool> isVisited(m_vertexQuantity, false);
@@ -469,13 +470,13 @@ void Graph::fordFulkerson(int startVertex)
 	{
 		int minWeight = INT_MAX;
 		
-		//Find minimum weight in path
+		//Find maximum flow in path
 		for (int i = 0; i < currentPath.size() - 1; i++)
 		{
 			if (bandwidthMatrix[currentPath[i]][currentPath[i + 1]] < minWeight)
 				minWeight = bandwidthMatrix[currentPath[i]][currentPath[i + 1]];
 		}
-
+		streamValue += minWeight;
 		//Change matrixes
 		for (int i = 0; i < currentPath.size() - 1; i++)
 		{
@@ -498,6 +499,170 @@ void Graph::fordFulkerson(int startVertex)
 	std::cout << "Ford-Fulkerson results: ";
 	showMatrix(streamMatrix);
 	std::cout << '\n';
+	
+	return streamValue;
+}
+
+bool Graph::findPathForFlow(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex, std::vector<std::vector<int>>& graph)
+{
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		if (marks[i] + graph[i][finalVertex] == marks[finalVertex] && graph[i][finalVertex] != 0)
+		{
+			if (startVertex == i) return true;
+			path.push_back(i);
+			if (findPathForFlow(path, startVertex, marks, i, graph))
+			{
+				return true;
+			}
+			else path.pop_back();
+		}
+	}
+}
+
+bool Graph::bellmanFordForFlow(int startVertex, std::vector<std::vector<int>>& graph, std::vector<int>& path)
+{
+	//Create start position
+	std::vector<int> marks(m_vertexQuantity, INT_MAX);
+	std::vector<bool> isAppearedInQueue(m_vertexQuantity, false);
+	std::vector<bool> isInQueue(m_vertexQuantity, false);
+	marks[startVertex] = 0;
+	isAppearedInQueue[startVertex] = true;
+	std::deque<std::pair<int, int>> queue;
+	queue.push_back(std::make_pair(0, startVertex));
+
+	//Algorithm
+	while (!queue.empty())
+	{
+		auto currentVertex = queue[0];
+		queue.pop_front();
+		isInQueue[currentVertex.second] = false;
+
+		for (int i = 0; i < m_vertexQuantity; i++)
+		{
+			if (graph[currentVertex.second][i] != 0)
+			{
+				if (marks[i] > marks[currentVertex.second] + graph[currentVertex.second][i])
+				{
+					marks[i] = marks[currentVertex.second] + graph[currentVertex.second][i];
+					if (isAppearedInQueue[i])
+					{
+						if (isInQueue[i])
+						{
+							for (auto j = queue.begin(); j != queue.end(); j++)
+							{
+								if ((*j).second == i)
+								{
+									queue.erase(j);
+									break;
+								}
+							}
+						}
+						queue.push_front(std::make_pair(marks[i], i));
+					}
+					else
+					{
+						queue.push_back(std::make_pair(marks[i], i));
+					}
+					isAppearedInQueue[i] = true;
+					isInQueue[i] = true;
+				}
+			}
+		}
+	}
+
+	//Find the path to last vertex
+	if (marks[m_vertexQuantity - 1] == INT_MAX)
+	{
+		return false;
+	}
+	else findPathForFlow(path, startVertex, marks, m_vertexQuantity - 1, graph);
+	return true;
+}
+
+int Graph::minCostFlow(int startVertex, int streamSize)
+{
+	int iterationCounter = 0;
+	int streamValue = 0;
+	bool isOver = false;
+	std::vector<std::vector<int>> streamMatrix(m_vertexQuantity, std::vector<int>(m_vertexQuantity, 0));
+	std::vector<int> currentPath;
+	//std::vector<bool> isVisited(m_vertexQuantity, false);
+	currentPath.push_back(startVertex);
+	auto bandwidthMatrix = m_bandwidthMatrix;
+	auto weightedMatrix = m_weightedMatrix;
+	auto modifiedWeightedMatrix = m_weightedMatrix;
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		for (int j = 0; j < i; j++)
+		{
+			modifiedWeightedMatrix[i][j] = -m_weightedMatrix[j][i];
+		}
+	}
+
+	while (bellmanFordForFlow(startVertex, weightedMatrix, currentPath))
+	{
+		iterationCounter++;
+		int minWeight = INT_MAX;
+		currentPath.push_back(m_vertexQuantity - 1);
+		int buffer = 0;
+		for (int i = 1; i < currentPath.size() / 2; i++)
+		{
+			buffer = currentPath[i];
+			currentPath[i] = currentPath[currentPath.size() - i - 1];
+			currentPath[currentPath.size() - i - 1] = buffer;
+		}
+		//Find maximum flow in path
+		for (int i = 0; i < currentPath.size() - 1; i++)
+		{
+			if (bandwidthMatrix[currentPath[i]][currentPath[i + 1]] < minWeight)
+				minWeight = bandwidthMatrix[currentPath[i]][currentPath[i + 1]];
+		}
+		if (streamValue + minWeight >= streamSize)
+		{
+			minWeight = streamSize - streamValue;
+			isOver = true;
+		}
+		else streamValue += minWeight;
+		//Change matrixes
+		for (int i = 0; i < currentPath.size() - 1; i++)
+		{
+			bandwidthMatrix[currentPath[i]][currentPath[i + 1]] -= minWeight;
+			if (bandwidthMatrix[currentPath[i]][currentPath[i + 1]] > 0)
+				weightedMatrix[currentPath[i]][currentPath[i + 1]] = modifiedWeightedMatrix[currentPath[i]][currentPath[i + 1]];
+			else 
+				weightedMatrix[currentPath[i]][currentPath[i + 1]] = 0;
+
+			bandwidthMatrix[currentPath[i + 1]][currentPath[i]] += minWeight;
+			if (bandwidthMatrix[currentPath[i + 1]][currentPath[i]] > 0)
+				weightedMatrix[currentPath[i + 1]][currentPath[i]] = modifiedWeightedMatrix[currentPath[i + 1]][currentPath[i]];
+			else 
+				weightedMatrix[currentPath[i + 1]][currentPath[i]] = 0;
+
+			if (currentPath[i] < currentPath[i + 1])
+				streamMatrix[currentPath[i]][currentPath[i + 1]] += minWeight;
+			if ((streamMatrix[currentPath[i + 1]][currentPath[i]] - minWeight) >= 0)
+				streamMatrix[currentPath[i + 1]][currentPath[i]] -= minWeight;
+		}
+		
+		if (isOver)
+		{
+			std::cout << "Minimal cost flow results: ";
+			showMatrix(streamMatrix);
+			std::cout << '\n';
+			return iterationCounter;
+		}
+		//Find next path
+		currentPath.clear();
+		currentPath.push_back(startVertex);
+		//for (int i = 0; i < m_vertexQuantity; i++) isVisited[i] = false;
+	}
+
+	//Output stream values
+	std::cout << "Minimal cost flow results: ";
+	showMatrix(streamMatrix);
+	std::cout << '\n';
+	return iterationCounter;
 }
 
 void Graph::Start()
@@ -681,7 +846,7 @@ void Graph::Start()
 					std::cin >> input;
 					if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) < m_vertexQuantity)
 					{
-						fordFulkerson(std::stoi(input));
+						std::cout << '\n' << minCostFlow(std::stoi(input), (fordFulkerson(std::stoi(input)) * 2) / 3) << '\n';
 						break;
 					}
 					else std::cout << "Number is incorrect.\n";
