@@ -503,21 +503,25 @@ int Graph::fordFulkerson(int startVertex)
 	return streamValue;
 }
 
-bool Graph::findPathForFlow(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex, std::vector<std::vector<int>>& graph)
+bool Graph::findPathForFlow(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex, std::vector<std::vector<int>>& graph, int lastVertex)
 {
 	for (int i = 0; i < m_vertexQuantity; i++)
 	{
-		if (marks[i] + graph[i][finalVertex] == marks[finalVertex] && graph[i][finalVertex] != 0)
+		if (i != lastVertex)
 		{
-			if (startVertex == i) return true;
-			path.push_back(i);
-			if (findPathForFlow(path, startVertex, marks, i, graph))
+			if (marks[i] + graph[i][finalVertex] == marks[finalVertex] && graph[i][finalVertex] != 0)
 			{
-				return true;
+				if (startVertex == i) return true;
+				path.push_back(i);
+				if (findPathForFlow(path, startVertex, marks, i, graph, finalVertex))
+				{
+					return true;
+				}
+				else path.pop_back();
 			}
-			else path.pop_back();
 		}
 	}
+	return false;
 }
 
 bool Graph::bellmanFordForFlow(int startVertex, std::vector<std::vector<int>>& graph, std::vector<int>& path)
@@ -540,32 +544,38 @@ bool Graph::bellmanFordForFlow(int startVertex, std::vector<std::vector<int>>& g
 
 		for (int i = 0; i < m_vertexQuantity; i++)
 		{
-			if (graph[currentVertex.second][i] != 0)
+			if (i != currentVertex.first)
 			{
-				if (marks[i] > marks[currentVertex.second] + graph[currentVertex.second][i])
+				if (graph[currentVertex.second][i] != 0)
 				{
-					marks[i] = marks[currentVertex.second] + graph[currentVertex.second][i];
-					if (isAppearedInQueue[i])
+					if (marks[i] > marks[currentVertex.second] + graph[currentVertex.second][i])
 					{
-						if (isInQueue[i])
+						marks[i] = marks[currentVertex.second] + graph[currentVertex.second][i];
+						if (i != m_vertexQuantity - 1)
 						{
-							for (auto j = queue.begin(); j != queue.end(); j++)
+							if (isAppearedInQueue[i])
 							{
-								if ((*j).second == i)
+								if (isInQueue[i])
 								{
-									queue.erase(j);
-									break;
+									for (auto j = queue.begin(); j != queue.end(); j++)
+									{
+										if ((*j).second == i)
+										{
+											queue.erase(j);
+											break;
+										}
+									}
 								}
+								queue.push_front(std::make_pair(currentVertex.second, i));
 							}
+							else
+							{
+								queue.push_back(std::make_pair(currentVertex.second, i));
+							}
+							isAppearedInQueue[i] = true;
+							isInQueue[i] = true;
 						}
-						queue.push_front(std::make_pair(marks[i], i));
 					}
-					else
-					{
-						queue.push_back(std::make_pair(marks[i], i));
-					}
-					isAppearedInQueue[i] = true;
-					isInQueue[i] = true;
 				}
 			}
 		}
@@ -576,7 +586,7 @@ bool Graph::bellmanFordForFlow(int startVertex, std::vector<std::vector<int>>& g
 	{
 		return false;
 	}
-	else findPathForFlow(path, startVertex, marks, m_vertexQuantity - 1, graph);
+	else findPathForFlow(path, startVertex, marks, m_vertexQuantity - 1, graph, -1);
 	return true;
 }
 
@@ -587,7 +597,6 @@ int Graph::minCostFlow(int startVertex, int streamSize)
 	bool isOver = false;
 	std::vector<std::vector<int>> streamMatrix(m_vertexQuantity, std::vector<int>(m_vertexQuantity, 0));
 	std::vector<int> currentPath;
-	//std::vector<bool> isVisited(m_vertexQuantity, false);
 	currentPath.push_back(startVertex);
 	auto bandwidthMatrix = m_bandwidthMatrix;
 	auto weightedMatrix = m_weightedMatrix;
@@ -655,7 +664,6 @@ int Graph::minCostFlow(int startVertex, int streamSize)
 		//Find next path
 		currentPath.clear();
 		currentPath.push_back(startVertex);
-		//for (int i = 0; i < m_vertexQuantity; i++) isVisited[i] = false;
 	}
 
 	//Output stream values
@@ -685,7 +693,7 @@ void Graph::Start()
 		std::cout << "6. Run Floyd-Warshall's Algorithm.\n";
 		std::cout << "7. Show matrix with weights.\n";
 		std::cout << "8. Recreate the graph.\n";
-		std::cout << "9. Run Ford-Falkerson's Algotithm.\n";
+		std::cout << "9. Run Ford-Falkerson's Algotithm and Get Flow (2/3 Fmax) of Minimal Cost.\n";
 		std::cout << "10. End the program.\n";
 
 		std::string input;
@@ -696,7 +704,7 @@ void Graph::Start()
 		{
 			std::cout << "Enter the operation number:\n";
 			std::cin >> input;
-			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 11)
+			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 10)
 			{
 				operationNumber = std::stoi(input);
 				isAssigned = true;
@@ -855,9 +863,6 @@ void Graph::Start()
 			break;
 		case 10:
 			return;
-		case 11:
-			createShit();
-			break;
 		}
 	}
 }

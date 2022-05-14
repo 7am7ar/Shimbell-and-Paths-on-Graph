@@ -18,13 +18,10 @@ private:
 	bool dfsFordFulkerson(std::vector<std::vector<int>>& graph, std::vector<int>& currentPath, int startVertex, std::vector<bool>& isVisited);
 	int fordFulkerson(int startVertex);
 	int minCostFlow(int startVertex, int streamSize);
-public:
 	bool bellmanFordForFlow(int startVertex, std::vector<std::vector<int>>& graph, std::vector<int>& path);
-private:
 	void createShit();
 	bool findPath(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex);
-	bool findPathForFlow(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex, std::vector<std::vector<int>>& graph);
-
+	bool findPathForFlow(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex, std::vector<std::vector<int>>& graph, int lastVertex);
 	int m_vertexQuantity;
 	int m_mode;
 	std::vector<std::vector<int>> m_matrix;
