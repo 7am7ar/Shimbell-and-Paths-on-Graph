@@ -9,6 +9,7 @@
 #include <set>
 #include <queue>
 #include <deque>
+#include <list>
 
 #define stop __asm nop
 
@@ -26,23 +27,6 @@ Graph::Graph()
 	createGraph(std::stoi(input));
 }
 
-void Graph::createShit()
-{
-	m_matrix.clear();
-	m_weightedMatrix.clear();
-	m_bandwidthMatrix.clear();
-	m_outdegrees.clear();
-	m_vertexQuantity = 4;
-	std::vector<int> one = { 0, 4, 4, 0 };
-	std::vector<int> two = { 0, 0, 2, 4 };
-	std::vector<int> three = { 0, 0, 0, 4 };
-	std::vector<int> four = { 0, 0, 0, 0};
-	m_bandwidthMatrix.push_back(one);
-	m_bandwidthMatrix.push_back(two);
-	m_bandwidthMatrix.push_back(three);
-	m_bandwidthMatrix.push_back(four);
-}
-
 void Graph::createGraph(int vertexQuantity)
 {
 	// Delete the previous graph
@@ -51,6 +35,7 @@ void Graph::createGraph(int vertexQuantity)
 	m_bandwidthMatrix.clear();
 	m_outdegrees.clear();
 	m_vertexQuantity = vertexQuantity;
+	m_minimumSpanningTree.clear();
 
 	//Calculate value of p0
 	double p0 = 1;
@@ -164,9 +149,16 @@ void Graph::createGraph(int vertexQuantity)
 
 void Graph::showMatrix(std::vector<std::vector<int>>& matrix)
 {
-	std::cout << '\n';
+	std::cout << "\n\t";
 	for (int i = 0; i < matrix.size(); i++)
 	{
+		std::cout << '(' << i << ")\t";
+	}
+	std::cout << '\n';
+
+	for (int i = 0; i < matrix.size(); i++)
+	{
+		std::cout << '(' << i << ")\t";
 		for (int j = 0; j < matrix.at(i).size(); j++)
 		{
 			std::cout << matrix.at(i).at(j) << '\t';
@@ -307,6 +299,7 @@ bool Graph::findPath(std::vector<int>& path, int startVertex, std::vector<int>& 
 			else path.pop_back();
 		}
 	}
+	return false;
 }
 
 int Graph::bellmanFord(int startVertex)
@@ -590,9 +583,8 @@ bool Graph::bellmanFordForFlow(int startVertex, std::vector<std::vector<int>>& g
 	return true;
 }
 
-int Graph::minCostFlow(int startVertex, int streamSize)
+void Graph::minCostFlow(int startVertex, int streamSize)
 {
-	int iterationCounter = 0;
 	int streamValue = 0;
 	bool isOver = false;
 	std::vector<std::vector<int>> streamMatrix(m_vertexQuantity, std::vector<int>(m_vertexQuantity, 0));
@@ -611,7 +603,6 @@ int Graph::minCostFlow(int startVertex, int streamSize)
 
 	while (bellmanFordForFlow(startVertex, weightedMatrix, currentPath))
 	{
-		iterationCounter++;
 		int minWeight = INT_MAX;
 		currentPath.push_back(m_vertexQuantity - 1);
 		int buffer = 0;
@@ -659,7 +650,7 @@ int Graph::minCostFlow(int startVertex, int streamSize)
 			std::cout << "Minimal cost flow results: ";
 			showMatrix(streamMatrix);
 			std::cout << '\n';
-			return iterationCounter;
+			return;
 		}
 		//Find next path
 		currentPath.clear();
@@ -670,6 +661,71 @@ int Graph::minCostFlow(int startVertex, int streamSize)
 	std::cout << "Minimal cost flow results: ";
 	showMatrix(streamMatrix);
 	std::cout << '\n';
+	return;
+}
+
+int Graph::prim()
+{
+	int iterationCounter = 0;
+	
+	return iterationCounter;
+}
+
+int Graph::kruskal()
+{
+	int iterationCounter = 0;
+	m_minimumSpanningTree.clear();
+	m_minimumSpanningTree = std::vector<std::vector<int>>(m_vertexQuantity, std::vector<int>(m_vertexQuantity, 0));
+	std::list<std::pair<int, int>> sortedEdges;
+
+	// Fill list with egdes in ascending order
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		for (int j = 0; j < m_vertexQuantity; j++)
+		{
+			if (m_weightedMatrix[i][j] != 0)
+			{
+				bool isEmplaced = false;
+				for (auto iter = sortedEdges.begin(); iter != sortedEdges.end(); iter++)
+				{
+					if (m_weightedMatrix[(*iter).first][(*iter).second] >= m_weightedMatrix[i][j])
+					{
+						sortedEdges.emplace(iter, std::make_pair(i, j));
+						isEmplaced = true;
+						break;
+					}
+				}
+				if (!isEmplaced) sortedEdges.push_back(std::make_pair(i, j));
+			}
+		}
+	}
+
+	// Fill minimum spanning tree
+	bool isOver = false;
+	std::vector<bool> isInSpanningTree(m_vertexQuantity, false);
+
+	while (!isOver)
+	{
+		iterationCounter++;
+		auto currentEdge = *(sortedEdges.begin());
+		sortedEdges.pop_front();
+
+		m_minimumSpanningTree[currentEdge.first][currentEdge.second] = m_weightedMatrix[currentEdge.first][currentEdge.second];
+		isInSpanningTree[currentEdge.first] = true;
+		isInSpanningTree[currentEdge.second] = true;
+
+		isOver = true;
+		for (int i = 0; i < m_vertexQuantity; i++)
+		{
+			if (isInSpanningTree[i] == false)
+			{
+				isOver = false;
+				break;
+			}
+		}
+	}
+	std::cout << "\nKruskal's Algorithm results:";
+	showMatrix(m_minimumSpanningTree);
 	return iterationCounter;
 }
 
@@ -694,7 +750,9 @@ void Graph::Start()
 		std::cout << "7. Show matrix with weights.\n";
 		std::cout << "8. Recreate the graph.\n";
 		std::cout << "9. Run Ford-Falkerson's Algotithm and Get Flow (2/3 Fmax) of Minimal Cost.\n";
-		std::cout << "10. End the program.\n";
+		std::cout << "10. Run Kruskal's Algorithm.\n";
+		std::cout << "11. Run Prim's Algorithm.\n";
+		std::cout << "12. End the program.\n";
 
 		std::string input;
 		int operationNumber;
@@ -704,7 +762,7 @@ void Graph::Start()
 		{
 			std::cout << "Enter the operation number:\n";
 			std::cin >> input;
-			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 10)
+			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 12)
 			{
 				operationNumber = std::stoi(input);
 				isAssigned = true;
@@ -854,7 +912,7 @@ void Graph::Start()
 					std::cin >> input;
 					if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) < m_vertexQuantity)
 					{
-						std::cout << '\n' << minCostFlow(std::stoi(input), (fordFulkerson(std::stoi(input)) * 2) / 3) << '\n';
+						minCostFlow(std::stoi(input), (fordFulkerson(std::stoi(input)) * 2) / 3);
 						break;
 					}
 					else std::cout << "Number is incorrect.\n";
@@ -862,6 +920,18 @@ void Graph::Start()
 			}
 			break;
 		case 10:
+			{
+				int iterations = kruskal();
+				std::cout << "Number of iterations: " << iterations << "\n\n";
+				break;
+			}
+		case 11:
+			{	
+				int iterations = prim();
+				std::cout << "Number of iterations: " << iterations << "\n\n";
+				break;
+			}
+		case 12:
 			return;
 		}
 	}
