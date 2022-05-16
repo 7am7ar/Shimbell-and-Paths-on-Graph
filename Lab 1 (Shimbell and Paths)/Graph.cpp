@@ -666,8 +666,101 @@ void Graph::minCostFlow(int startVertex, int streamSize)
 
 int Graph::prim()
 {
+	std::mt19937 mersenne(static_cast<unsigned int>(time(0)));
 	int iterationCounter = 0;
+	m_minimumSpanningTree.clear();
+	m_minimumSpanningTree = std::vector<std::vector<int>>(m_vertexQuantity, std::vector<int>(m_vertexQuantity, 0));
+
+	int startingVertex = mersenne() % m_vertexQuantity;
+	std::vector<bool> isInSpanningTree(m_vertexQuantity, false);
+	isInSpanningTree[startingVertex] = true;
+	bool isOver = false;
 	
+	auto copyOfWeightedMatrix = m_weightedMatrix;
+	while(!isOver)
+	{
+		//Find Minimum Edge connected to current current subgraph
+		std::pair<int, int> minimumEdge;
+		bool isFound = false;
+		for (int i = 0; i < m_vertexQuantity; i++)
+		{
+			// Check for edges in minimum spanning tree
+			if (isInSpanningTree[i] == true)
+			{
+				for (int j = 0; j < m_vertexQuantity; j++)
+				{
+					iterationCounter++;
+					// Check for not internal edges
+					if (isInSpanningTree[j] == false)
+					{
+						// Check for both possible connections
+						if (copyOfWeightedMatrix[i][j] != 0)
+						{
+							if (!isFound)
+							{
+								isFound = true;
+								minimumEdge = std::make_pair(i, j);
+							}
+							else
+							{
+								if (copyOfWeightedMatrix[i][j] < copyOfWeightedMatrix[minimumEdge.first][minimumEdge.second])
+								{
+									minimumEdge = std::make_pair(i, j);
+								}
+							}
+						}
+						if (copyOfWeightedMatrix[j][i] != 0)
+						{
+							if (!isFound)
+							{
+								isFound = true;
+								minimumEdge = std::make_pair(j, i);
+							}
+							else
+							{
+								if (copyOfWeightedMatrix[j][i] < copyOfWeightedMatrix[minimumEdge.first][minimumEdge.second])
+								{
+									minimumEdge = std::make_pair(j, i);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		//Put edge in minimum spanning tree or not put
+		if (!isAchievable(minimumEdge.first, minimumEdge.second, m_minimumSpanningTree, -1))
+		{
+			m_minimumSpanningTree[minimumEdge.first][minimumEdge.second] = m_weightedMatrix[minimumEdge.first][minimumEdge.second];
+			m_minimumSpanningTree[minimumEdge.second][minimumEdge.first] = m_weightedMatrix[minimumEdge.first][minimumEdge.second];
+		}
+		if (isAchievable(minimumEdge.first, minimumEdge.first, m_minimumSpanningTree, -1))
+		{
+			m_minimumSpanningTree[minimumEdge.first][minimumEdge.second] = 0;
+			m_minimumSpanningTree[minimumEdge.second][minimumEdge.first] = 0;
+			copyOfWeightedMatrix[minimumEdge.first][minimumEdge.second] = 0;
+		}
+		else
+		{
+			isInSpanningTree[minimumEdge.first] = true;
+			isInSpanningTree[minimumEdge.second] = true;
+		}
+
+		//Check for end
+		isOver = true;
+		for (int i = 0; i < m_vertexQuantity; i++)
+		{
+			if (isInSpanningTree[i] == false)
+			{
+				isOver = false;
+				break;
+			}
+		}
+	}
+
+	std::cout << "\nPrim's Algorithm results:";
+	showMatrix(m_minimumSpanningTree);
 	return iterationCounter;
 }
 
@@ -688,6 +781,7 @@ int Graph::kruskal()
 				bool isEmplaced = false;
 				for (auto iter = sortedEdges.begin(); iter != sortedEdges.end(); iter++)
 				{
+					iterationCounter++;
 					if (m_weightedMatrix[(*iter).first][(*iter).second] >= m_weightedMatrix[i][j])
 					{
 						sortedEdges.emplace(iter, std::make_pair(i, j));
@@ -701,32 +795,38 @@ int Graph::kruskal()
 	}
 
 	// Fill minimum spanning tree
-	bool isOver = false;
-	std::vector<bool> isInSpanningTree(m_vertexQuantity, false);
-
-	while (!isOver)
+	while (!sortedEdges.empty())
 	{
-		iterationCounter++;
 		auto currentEdge = *(sortedEdges.begin());
 		sortedEdges.pop_front();
-
-		m_minimumSpanningTree[currentEdge.first][currentEdge.second] = m_weightedMatrix[currentEdge.first][currentEdge.second];
-		isInSpanningTree[currentEdge.first] = true;
-		isInSpanningTree[currentEdge.second] = true;
-
-		isOver = true;
-		for (int i = 0; i < m_vertexQuantity; i++)
+		if (!isAchievable(currentEdge.first, currentEdge.second, m_minimumSpanningTree, -1))
 		{
-			if (isInSpanningTree[i] == false)
-			{
-				isOver = false;
-				break;
-			}
+			m_minimumSpanningTree[currentEdge.first][currentEdge.second] = m_weightedMatrix[currentEdge.first][currentEdge.second];
+			m_minimumSpanningTree[currentEdge.second][currentEdge.first] = m_weightedMatrix[currentEdge.first][currentEdge.second];
+		}
+		if (isAchievable(currentEdge.first, currentEdge.first, m_minimumSpanningTree, -1))
+		{
+			m_minimumSpanningTree[currentEdge.first][currentEdge.second] = 0;
+			m_minimumSpanningTree[currentEdge.second][currentEdge.first] = 0;
 		}
 	}
+
 	std::cout << "\nKruskal's Algorithm results:";
 	showMatrix(m_minimumSpanningTree);
 	return iterationCounter;
+}
+
+bool Graph::isAchievable(int vertexOne, int vertexTwo, std::vector<std::vector<int>>& graph, int lastVertex)
+{
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		if ((graph[i][vertexOne] != 0 || graph[vertexOne][i] != 0) && i != lastVertex)
+		{
+			if (i == vertexTwo) return true;
+			if (isAchievable(i, vertexTwo, graph, vertexOne)) return true;
+		}
+	}
+	return false;
 }
 
 void Graph::Start()

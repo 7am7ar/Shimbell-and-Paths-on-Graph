@@ -21,6 +21,7 @@ private:
 	bool bellmanFordForFlow(int startVertex, std::vector<std::vector<int>>& graph, std::vector<int>& path);
 	bool findPath(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex);
 	bool findPathForFlow(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex, std::vector<std::vector<int>>& graph, int lastVertex);
+	bool isAchievable(int vertexOne, int vertexTwo, std::vector<std::vector<int>>& graph, int lastVertex);
 	int prim();
 	int kruskal();
 	int m_vertexQuantity;
