@@ -26,6 +26,8 @@ private:
 	int findDeterminant(std::vector<std::vector<int>>& matrix);
 	int prim();
 	int kruskal();
+	void codePrufer();
+	void decodePrufer();
 	int m_vertexQuantity;
 	int m_mode;
 	std::vector<std::vector<int>> m_matrix;
@@ -33,4 +35,5 @@ private:
 	std::vector<std::vector<int>> m_bandwidthMatrix;
 	std::vector<std::vector<int>> m_minimumSpanningTree;
 	std::vector<int> m_outdegrees;
+	std::vector<std::pair<int, int>> m_pruferSpanningTree;
 };

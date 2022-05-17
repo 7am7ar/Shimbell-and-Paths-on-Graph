@@ -36,6 +36,7 @@ void Graph::createGraph(int vertexQuantity)
 	m_outdegrees.clear();
 	m_vertexQuantity = vertexQuantity;
 	m_minimumSpanningTree.clear();
+	m_pruferSpanningTree.clear();
 
 	//Calculate value of p0
 	double p0 = 1;
@@ -851,8 +852,6 @@ int Graph::findNumberOfSpanningTrees()
 		}
 		kirchhoffMatrix[i][i] = degree;
 	}
-	
-	showMatrix(kirchhoffMatrix);
 
 	//Calculate minor for 1,1
 	std::vector<std::vector<int>> newMatrix(kirchhoffMatrix[0].size() - 1, std::vector<int>(kirchhoffMatrix[0].size() - 1, 0));
@@ -863,7 +862,6 @@ int Graph::findNumberOfSpanningTrees()
 			newMatrix[j][k] = kirchhoffMatrix[j + 1][k + 1];
 		}
 	}
-	showMatrix(newMatrix);
 	return findDeterminant(newMatrix);
 }
 
@@ -882,11 +880,97 @@ int Graph::findDeterminant(std::vector<std::vector<int>>& matrix)
 				else newMatrix[j][k] = matrix[j][k + 1];
 			}
 		}
-		showMatrix(newMatrix);
 		if (i % 2 == 0) det += matrix[0][i] * findDeterminant(newMatrix);
 		else det -= matrix[0][i] * findDeterminant(newMatrix);
 	}
 	return det;
+}
+
+void Graph::codePrufer()
+{
+	m_pruferSpanningTree.clear();
+
+	if (m_minimumSpanningTree.size() == 0)
+	{
+		std::cout << "\nMinimum spanning tree is not generated.\n";
+		return;
+	}
+
+	auto copySpanTree = m_minimumSpanningTree;
+	int vertexCounter = 0;
+
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		bool isLeaf = true;
+		int count = 0;
+
+		for (int j = 0; j < m_vertexQuantity; j++)
+		{
+			if (copySpanTree[i][j] != 0)
+			{
+				count++;
+				if (count > 1)
+				{
+					isLeaf = false;
+					break;
+				}
+			}
+		}
+
+		if (isLeaf && count != 0)
+		{
+			bool isAppripriate = true;
+			if (!m_pruferSpanningTree.empty())
+			{
+				for (auto iter = m_pruferSpanningTree.begin(); iter != m_pruferSpanningTree.begin(); iter++)
+				{
+					if ((*iter).first == i)
+					{
+						isAppripriate = false;
+						break;
+					}
+				}
+			}
+
+			int nearVertex = 0;
+			for (int k = 0; k < m_vertexQuantity; k++)
+			{
+				if (copySpanTree[i][k] != 0)
+				{
+					nearVertex = k;
+				}
+			}
+
+			if (isAppripriate)
+			{
+				m_pruferSpanningTree.push_back(std::make_pair(i, copySpanTree[i][nearVertex]));
+
+				if (vertexCounter == m_vertexQuantity - 2) 
+					m_pruferSpanningTree.push_back(std::make_pair(nearVertex, copySpanTree[i][nearVertex]));
+
+				copySpanTree[i][nearVertex] = 0;
+				copySpanTree[nearVertex][i] = 0;
+				i = 0;
+				vertexCounter++;
+			}
+		}
+	}
+
+	std::cout << "\nPrufer's code: ";
+	for (int i = 0; i < m_pruferSpanningTree.size(); i++)
+	{
+		std::cout << m_pruferSpanningTree[i].first << '\t';
+	}
+	std::cout << "\n\n";
+}
+
+void Graph::decodePrufer()
+{
+	if (m_pruferSpanningTree.size() == 0)
+	{
+		std::cout << "\nPrufer's code is not generated.\n";
+		return;
+	}
 }
 
 void Graph::Start()
@@ -913,7 +997,9 @@ void Graph::Start()
 		std::cout << "10. Run Kruskal's Algorithm.\n";
 		std::cout << "11. Run Prim's Algorithm.\n";
 		std::cout << "12. Find number of Spanning trees using Kirchhoff's theorem.\n";
-		std::cout << "13. End the program.\n";
+		std::cout << "13. Code Spanning Tree using Prufer's code.\n";
+		std::cout << "14. Decode Prufer's code.\n";
+		std::cout << "15. End the program.\n";
 
 		std::string input;
 		int operationNumber;
@@ -923,7 +1009,7 @@ void Graph::Start()
 		{
 			std::cout << "Enter the operation number:\n";
 			std::cin >> input;
-			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 13)
+			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 15)
 			{
 				operationNumber = std::stoi(input);
 				isAssigned = true;
@@ -1098,6 +1184,12 @@ void Graph::Start()
 				std::cout << "Number of Spanning Trees: " << number << "\n\n";
 			}
 		case 13:
+			codePrufer();
+			break;
+		case 14:
+			decodePrufer();
+			break;
+		case 15:
 			return;
 		}
 	}
