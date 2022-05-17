@@ -829,6 +829,66 @@ bool Graph::isAchievable(int vertexOne, int vertexTwo, std::vector<std::vector<i
 	return false;
 }
 
+int Graph::findNumberOfSpanningTrees()
+{
+	//Fill Kirchhoff's matrix
+	std::vector<std::vector<int>> kirchhoffMatrix(m_vertexQuantity, std::vector<int>(m_vertexQuantity, 0));
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		int degree = 0;
+		for (int j = 0; j < m_vertexQuantity; j++)
+		{
+			if (m_matrix[i][j] != 0)
+			{
+				kirchhoffMatrix[i][j] = -1;
+				degree++;
+			}
+			if (m_matrix[j][i] != 0)
+			{
+				kirchhoffMatrix[i][j] = -1;
+				degree++;
+			}
+		}
+		kirchhoffMatrix[i][i] = degree;
+	}
+	
+	showMatrix(kirchhoffMatrix);
+
+	//Calculate minor for 1,1
+	std::vector<std::vector<int>> newMatrix(kirchhoffMatrix[0].size() - 1, std::vector<int>(kirchhoffMatrix[0].size() - 1, 0));
+	for (int j = 0; j < kirchhoffMatrix[0].size() - 1; j++)
+	{
+		for (int k = 0; k < kirchhoffMatrix[0].size() - 1; k++)
+		{
+			newMatrix[j][k] = kirchhoffMatrix[j + 1][k + 1];
+		}
+	}
+	showMatrix(newMatrix);
+	return findDeterminant(newMatrix);
+}
+
+int Graph::findDeterminant(std::vector<std::vector<int>>& matrix)
+{
+	if (matrix[0].size() == 2) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+	int det = 0;
+	for (int i = 0; i < matrix[0].size(); i++)
+	{
+		std::vector<std::vector<int>> newMatrix(matrix[0].size() - 1, std::vector<int>(matrix[0].size() - 1, 0));
+		for (int j = 0; j < matrix[0].size() - 1; j++)
+		{
+			for (int k = 0; k < matrix[0].size() - 1; k++)
+			{
+				if (j >= i) newMatrix[j][k] = matrix[j + 1][k + 1];
+				else newMatrix[j][k] = matrix[j][k + 1];
+			}
+		}
+		showMatrix(newMatrix);
+		if (i % 2 == 0) det += matrix[0][i] * findDeterminant(newMatrix);
+		else det -= matrix[0][i] * findDeterminant(newMatrix);
+	}
+	return det;
+}
+
 void Graph::Start()
 {
 	std::cout << "Matrix without weights:\n";
@@ -852,7 +912,8 @@ void Graph::Start()
 		std::cout << "9. Run Ford-Falkerson's Algotithm and Get Flow (2/3 Fmax) of Minimal Cost.\n";
 		std::cout << "10. Run Kruskal's Algorithm.\n";
 		std::cout << "11. Run Prim's Algorithm.\n";
-		std::cout << "12. End the program.\n";
+		std::cout << "12. Find number of Spanning trees using Kirchhoff's theorem.\n";
+		std::cout << "13. End the program.\n";
 
 		std::string input;
 		int operationNumber;
@@ -862,7 +923,7 @@ void Graph::Start()
 		{
 			std::cout << "Enter the operation number:\n";
 			std::cin >> input;
-			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 12)
+			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 13)
 			{
 				operationNumber = std::stoi(input);
 				isAssigned = true;
@@ -1032,6 +1093,11 @@ void Graph::Start()
 				break;
 			}
 		case 12:
+			{
+				int number = findNumberOfSpanningTrees();
+				std::cout << "Number of Spanning Trees: " << number << "\n\n";
+			}
+		case 13:
 			return;
 		}
 	}

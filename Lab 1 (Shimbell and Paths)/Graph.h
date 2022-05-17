@@ -22,6 +22,8 @@ private:
 	bool findPath(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex);
 	bool findPathForFlow(std::vector<int>& path, int startVertex, std::vector<int>& marks, int finalVertex, std::vector<std::vector<int>>& graph, int lastVertex);
 	bool isAchievable(int vertexOne, int vertexTwo, std::vector<std::vector<int>>& graph, int lastVertex);
+	int findNumberOfSpanningTrees();
+	int findDeterminant(std::vector<std::vector<int>>& matrix);
 	int prim();
 	int kruskal();
 	int m_vertexQuantity;
