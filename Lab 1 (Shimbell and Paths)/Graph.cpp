@@ -664,6 +664,18 @@ void Graph::minCostFlow(int startVertex, int streamSize)
 			std::cout << "\nFlow: " << count << '\n';
 			showMatrix(streamMatrix);
 			std::cout << '\n';
+			std::cout << "\nCost Matrix: ";
+			showMatrix(m_weightedMatrix);
+			std::cout << '\n';
+			int resultSum = 0;
+			for (int i = 0; i < m_vertexQuantity; i++)
+			{
+				if (streamMatrix[i][m_vertexQuantity - 1] != 0)
+				{
+					resultSum += streamMatrix[i][m_vertexQuantity - 1] * modifiedWeightedMatrix[i][m_vertexQuantity - 1];
+				}
+			}
+			std::cout << "\nResulting sum: " << resultSum << "\n\n";
 			return;
 		}
 		//Find next path
@@ -682,6 +694,18 @@ void Graph::minCostFlow(int startVertex, int streamSize)
 	std::cout << "\nFlow: " << count << '\n';
 	showMatrix(streamMatrix);
 	std::cout << '\n';
+	std::cout << "\nCost Matrix: ";
+	showMatrix(m_weightedMatrix);
+	std::cout << '\n';
+	int resultSum = 0;
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		if (streamMatrix[i][m_vertexQuantity - 1] != 0)
+		{
+			resultSum += streamMatrix[i][m_vertexQuantity - 1] * modifiedWeightedMatrix[i][m_vertexQuantity - 1];
+		}
+	}
+	std::cout << "\nResulting sum: " << resultSum << "\n\n";
 	return;
 }
 
@@ -781,6 +805,18 @@ int Graph::prim()
 	}
 
 	std::cout << "\nPrim's Algorithm results:";
+	int resultSum = 0;
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		for (int j = i + 1; j < m_vertexQuantity; j++)
+		{
+			if (m_minimumSpanningTree[i][j] != 0)
+			{
+				resultSum += m_minimumSpanningTree[i][j];
+			}
+		}
+	}
+	std::cout << "\nMinumum Spanning Tree Weight:" << resultSum << '\n';
 	showMatrix(m_minimumSpanningTree);
 	return iterationCounter;
 }
@@ -833,6 +869,18 @@ int Graph::kruskal()
 	}
 
 	std::cout << "\nKruskal's Algorithm results:";
+	int resultSum = 0;
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		for (int j = i + 1; j < m_vertexQuantity; j++)
+		{
+			if (m_minimumSpanningTree[i][j] != 0)
+			{
+				resultSum += m_minimumSpanningTree[i][j];
+			}
+		}
+	}
+	std::cout << "\nMinumum Spanning Tree Weight:" << resultSum << '\n';
 	showMatrix(m_minimumSpanningTree);
 	return iterationCounter;
 }
@@ -1184,17 +1232,6 @@ void Graph::Start()
 					}
 					else std::cout << "Number is incorrect.\n";
 				}
-				std::cout << "\nCost Matrix: ";
-				auto modifiedWeightedMatrix = m_weightedMatrix;
-				for (int i = 0; i < m_vertexQuantity; i++)
-				{
-					for (int j = 0; j < i; j++)
-					{
-						modifiedWeightedMatrix[i][j] = m_weightedMatrix[j][i];
-					}
-				}
-				showMatrix(modifiedWeightedMatrix);
-				std::cout << '\n';
 			}
 			break;
 		case 10:
@@ -1213,6 +1250,7 @@ void Graph::Start()
 			{
 				int number = findNumberOfSpanningTrees();
 				std::cout << "Number of Spanning Trees: " << number << "\n\n";
+				break;
 			}
 		case 13:
 			codePrufer();
