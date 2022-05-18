@@ -960,12 +960,11 @@ void Graph::codePrufer()
 
 	if (m_minimumSpanningTree.size() == 0)
 	{
-		std::cout << "\nMinimum spanning tree is not generated.\n";
+		std::cout << "\nMinimum spanning tree is not generated.\n\n";
 		return;
 	}
 
 	auto copySpanTree = m_minimumSpanningTree;
-	int vertexCounter = 0;
 
 	for (int i = 0; i < m_vertexQuantity; i++)
 	{
@@ -1011,15 +1010,10 @@ void Graph::codePrufer()
 
 			if (isAppripriate)
 			{
-				m_pruferSpanningTree.push_back(std::make_pair(i, copySpanTree[i][nearVertex]));
-
-				if (vertexCounter == m_vertexQuantity - 2) 
-					m_pruferSpanningTree.push_back(std::make_pair(nearVertex, copySpanTree[i][nearVertex]));
-
+				m_pruferSpanningTree.push_back(std::make_pair(nearVertex, copySpanTree[i][nearVertex]));
 				copySpanTree[i][nearVertex] = 0;
 				copySpanTree[nearVertex][i] = 0;
 				i = 0;
-				vertexCounter++;
 			}
 		}
 	}
@@ -1036,9 +1030,35 @@ void Graph::decodePrufer()
 {
 	if (m_pruferSpanningTree.size() == 0)
 	{
-		std::cout << "\nPrufer's code is not generated.\n";
+		std::cout << "\nPrufer's code is not generated.\n\n";
 		return;
 	}
+
+	std::vector<bool> isUsed(m_vertexQuantity, false);
+	std::vector<std::vector<int>> tree(m_vertexQuantity, std::vector<int>(m_vertexQuantity, 0));
+
+	for (auto iter = m_pruferSpanningTree.begin(); iter != m_pruferSpanningTree.end(); iter++)
+	{
+		std::vector<bool> isNotInCode(m_vertexQuantity, true);
+		for (auto jter = iter; jter != m_pruferSpanningTree.end(); jter++)
+		{
+			isNotInCode[(*jter).first] = false;
+		}
+		for (int j = 0; j < m_vertexQuantity; j++)
+		{
+			if (isNotInCode[j] && !(isUsed[j]))
+			{
+				tree[j][(*iter).first] = (*iter).second;
+				tree[(*iter).first][j] = (*iter).second;
+				isUsed[j] = true;
+				break;
+			}
+		}
+	}
+
+	std::cout << "\nDecoding Prufer's code result: ";
+	showMatrix(tree);
+	std::cout << '\n';
 }
 
 void Graph::Start()
@@ -1249,7 +1269,7 @@ void Graph::Start()
 		case 12:
 			{
 				int number = findNumberOfSpanningTrees();
-				std::cout << "Number of Spanning Trees: " << number << "\n\n";
+				std::cout << "\nNumber of Spanning Trees: " << number << "\n\n";
 				break;
 			}
 		case 13:
