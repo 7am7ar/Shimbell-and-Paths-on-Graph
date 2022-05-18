@@ -411,8 +411,16 @@ int Graph::floydWarshall(int startVertex)
 
 	//Output distance
 	std::cout << "Floyd-Warshall results:\n";
+	std::cout << "\n\t";
 	for (int i = 0; i < m_vertexQuantity; i++)
 	{
+		std::cout << '(' << i << ")\t";
+	}
+	std::cout << '\n';
+
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		std::cout << '(' << i << ")\t";
 		for (int j = 0; j < m_vertexQuantity; j++)
 		{
 			if (distance[i][j] == INT_MAX) std::cout << "inf";
@@ -900,6 +908,7 @@ bool Graph::isAchievable(int vertexOne, int vertexTwo, std::vector<std::vector<i
 
 int Graph::findNumberOfSpanningTrees()
 {
+	if (m_vertexQuantity == 2) return 1;
 	//Fill Kirchhoff's matrix
 	std::vector<std::vector<int>> kirchhoffMatrix(m_vertexQuantity, std::vector<int>(m_vertexQuantity, 0));
 	for (int i = 0; i < m_vertexQuantity; i++)
