@@ -734,7 +734,7 @@ int Graph::prim()
 	auto copyOfWeightedMatrix = m_weightedMatrix;
 	while(!isOver)
 	{
-		//Find Minimum Edge connected to current current subgraph
+		//Find Minimum Edge connected to current subgraph
 		std::pair<int, int> minimumEdge;
 		bool isFound = false;
 		for (int i = 0; i < m_vertexQuantity; i++)
@@ -890,8 +890,9 @@ int Graph::kruskal()
 			}
 		}
 	}
-	std::cout << "\nMinumum Spanning Tree Weight:" << resultSum << '\n';
+	std::cout << "\nMinimum Spanning Tree Weight:" << resultSum << '\n';
 	showMatrix(m_minimumSpanningTree);
+
 	return iterationCounter;
 }
 
