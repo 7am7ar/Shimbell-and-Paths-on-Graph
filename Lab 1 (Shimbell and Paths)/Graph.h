@@ -30,6 +30,7 @@ private:
 	void decodePrufer();
 	void hamilton();
 	void euler();
+	void findHamiltoninanCycle(std::ofstream& fout, std::vector<std::vector<int>>& graph, std::vector<int>& path, int length, std::vector<int>& minimumPath, int& minimumLength);
 	int m_vertexQuantity;
 	int m_mode;
 	std::vector<std::vector<int>> m_matrix;

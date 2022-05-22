@@ -2,6 +2,7 @@
 #include "Constants.h"
 #include "GlobalFunctions.h"
 
+#include <fstream>
 #include <iostream>
 #include <algorithm>
 #include <random>
@@ -1216,7 +1217,175 @@ void Graph::euler()
 
 void Graph::hamilton()
 {
+	std::ofstream fout("ListOfHamiltonianCycles.txt");
 
+	if (m_vertexQuantity == 2)
+	{
+		std::cout << "\nGraph is hamiltonian.\nList of Hamiltonian cycles is in file ListOfHamiltonianCycles.txt.\n\n";
+		fout << "Cycle: 0 1 0 Length: " << m_weightedMatrix[0][1];
+		fout.close();
+		return;
+	}
+
+	auto modifiedWeightedMatrix = m_weightedMatrix;
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		for (int j = 0; j < i; j++)
+		{
+			modifiedWeightedMatrix[i][j] = m_weightedMatrix[j][i];
+		}
+	}
+
+	// Check for condition from theorem (if degree > p/2 => hamiltonian)
+	bool isHamiltonian = true;
+	std::vector<int> degrees(m_vertexQuantity, 0);
+	std::mt19937 mersenne(static_cast<unsigned int>(time(0)));
+
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		for (int j = 0; j < m_vertexQuantity; j++)
+		{
+			if (modifiedWeightedMatrix[i][j] != 0) degrees[i]++;
+		}
+		if (degrees[i] < (m_vertexQuantity / 2))
+		{
+			isHamiltonian = false;
+		}
+	}
+
+	// If not hamiltonian, add edges to make it hamiltonian
+
+	if (isHamiltonian) std::cout << "\nGraph is Hamiltonian.\n";
+	else
+	{
+		std::cout << "\nGraph may not be Hamiltonian.\n";
+
+		while (!isHamiltonian)
+		{
+			bool isChanged = false;
+
+			for (int i = 0; i < m_vertexQuantity; i++)
+			{
+				if (degrees[i] < (m_vertexQuantity / 2))
+				{
+					// Add edges make degree appropriate according to condition
+					int appropriateVertex = -1;
+
+					for (int j = 0; j < m_vertexQuantity; j++)
+					{
+						if (modifiedWeightedMatrix[i][j] == 0 && i != j)
+						{
+							if (appropriateVertex == -1) appropriateVertex = j;
+
+							if (degrees[j] < (m_vertexQuantity / 2))
+							{
+								isChanged = true;
+								degrees[i]++;
+								degrees[j]++;
+								modifiedWeightedMatrix[i][j] = (mersenne() % 100) + 1;
+								if (m_mode == 1) modifiedWeightedMatrix[i][j] *= -1;
+								if (m_mode == 2) modifiedWeightedMatrix[i][j] *= std::pow(-1, mersenne() % 2);
+								modifiedWeightedMatrix[j][i] = modifiedWeightedMatrix[i][j];
+								break;
+							}
+						}
+					}
+
+					if (!isChanged && appropriateVertex != -1)
+					{
+						isChanged = true;
+						degrees[i]++;
+						degrees[appropriateVertex]++;
+						modifiedWeightedMatrix[i][appropriateVertex] = (mersenne() % 100) + 1;
+						if (m_mode == 1) modifiedWeightedMatrix[i][appropriateVertex] *= -1;
+						if (m_mode == 2) modifiedWeightedMatrix[i][appropriateVertex] *= std::pow(-1, mersenne() % 2);
+						modifiedWeightedMatrix[appropriateVertex][i] = modifiedWeightedMatrix[i][appropriateVertex];
+					}
+				}
+			}
+
+			if (!isChanged) isHamiltonian = true;
+		}
+
+		std::cout << "\nModified Hamiltonian Graph weighted matrix: \n";
+		showMatrix(modifiedWeightedMatrix);
+		std::cout << '\n';
+	}
+
+	// Find all hamiltonian cycles
+	std::vector<int> path;
+	path.push_back(0);
+	std::vector<int> minimumPath;
+	int length = 0;
+	int minimumLength = 0;
+
+	findHamiltoninanCycle(fout, modifiedWeightedMatrix, path, length, minimumPath, minimumLength);
+
+	std::cout << "List of Hamiltonian cycles is in file ListOfHamiltonianCycles.txt.\nMinimum weighted cycle: ";
+	for (int i = 0; i < minimumPath.size(); i++)
+	{
+		std::cout << minimumPath[i] << ' ';
+	}
+	std::cout << "Length:" << minimumLength << "\n\n";
+
+	fout.close();
+}
+
+void Graph::findHamiltoninanCycle(std::ofstream& fout, std::vector<std::vector<int>>& graph, std::vector<int>& path, int length, std::vector<int>& minimumPath, int& minimumLength)
+{
+	if (path.size() == m_vertexQuantity)
+	{
+		if (graph[path[path.size() - 1]][0] != 0)
+		{
+			length += graph[path[path.size() - 1]][0];
+			path.push_back(0);
+
+			if (minimumLength > length)
+			{
+				minimumPath = path;
+				minimumLength = length;
+			}
+
+			fout << "Cycle: ";
+			for (int i = 0; i < path.size(); i++)
+			{
+				fout << path[i] << ' ';
+			}
+			fout << "Length:" << length << '\n';
+
+			path.pop_back();
+		}
+		return;
+	}
+	else
+	{
+		for (int i = 0; i < m_vertexQuantity; i++)
+		{
+			if (graph[path[path.size() - 1]][i] != 0)
+			{
+				bool isInPath = false;
+
+				for (int j = 0; j < path.size(); j++)
+				{
+					if (path[j] == i)
+					{
+						isInPath = true;
+						break;
+					}
+				}
+
+				if (!isInPath)
+				{
+					length += graph[path[path.size() - 1]][i];
+					path.push_back(i);
+					findHamiltoninanCycle(fout, graph, path, length, minimumPath, minimumLength);
+					path.pop_back();
+				}
+			}
+		}
+
+		return;
+	}
 }
 
 void Graph::Start()
