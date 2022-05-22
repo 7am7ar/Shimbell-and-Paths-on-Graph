@@ -28,6 +28,8 @@ private:
 	int kruskal();
 	void codePrufer();
 	void decodePrufer();
+	void hamilton();
+	void euler();
 	int m_vertexQuantity;
 	int m_mode;
 	std::vector<std::vector<int>> m_matrix;

@@ -9,6 +9,7 @@
 #include <set>
 #include <queue>
 #include <deque>
+#include <stack>
 #include <list>
 
 #define stop __asm nop
@@ -1070,6 +1071,154 @@ void Graph::decodePrufer()
 	std::cout << '\n';
 }
 
+void Graph::euler()
+{
+	if (m_vertexQuantity == 2)
+	{
+		std::cout << "\nGraph with two vertexes can't have euler's cycle.\n\n";
+		return;
+	}
+
+	auto modifiedWeightedMatrix = m_weightedMatrix;
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		for (int j = 0; j < i; j++)
+		{
+			modifiedWeightedMatrix[i][j] = m_weightedMatrix[j][i];
+		}
+	}
+
+	//Check is graph eulerian or not
+	bool isEulerian = true;
+	std::vector<int> degrees(m_vertexQuantity, 0);
+	std::mt19937 mersenne(static_cast<unsigned int>(time(0)));
+
+	for (int i = 0; i < m_vertexQuantity; i++)
+	{
+		for (int j = 0; j < m_vertexQuantity; j++)
+		{
+			if (modifiedWeightedMatrix[i][j] != 0) degrees[i]++;
+		}
+		if (degrees[i] % 2 == 1)
+		{
+			if (degrees[i] == m_vertexQuantity - 1)
+			{
+				std::cout << "\nThis graph is not Eulerian and can't become such by adding edges.\n\n";
+				return;
+			}
+			isEulerian = false;
+		}
+	}
+
+	// If not Eulerian, add edges to make it eulerian
+	if (isEulerian) std::cout << "\nGraph is Eulerian.\n\n";
+	else
+	{
+		std::cout << "\nGraph is not Eulerian.\n\n";
+		while (!isEulerian)
+		{
+			bool isChanged = false;
+
+			for (int i = 0; i < m_vertexQuantity; i++)
+			{
+				if (degrees[i] % 2 == 1)
+				{
+					// Add edges to make degree even
+					int appropriateVertex = -1;
+
+					for (int j = 0; j < m_vertexQuantity; j++)
+					{
+						if (modifiedWeightedMatrix[i][j] == 0 && i != j)
+						{
+							if (appropriateVertex == -1)
+							{
+								if (m_vertexQuantity % 2 == 0)
+								{
+									if (degrees[j] != m_vertexQuantity - 1) appropriateVertex = j;
+								}
+								else appropriateVertex = j;
+							}
+							if (degrees[j] % 2 == 1)
+							{
+								isChanged = true;
+								degrees[i]++;
+								degrees[j]++;
+								modifiedWeightedMatrix[i][j] = (mersenne() % 100) + 1;
+								if (m_mode == 1) modifiedWeightedMatrix[i][j] *= -1;
+								if (m_mode == 2) modifiedWeightedMatrix[i][j] *= std::pow(-1, mersenne() % 2);
+								modifiedWeightedMatrix[j][i] = modifiedWeightedMatrix[i][j];
+								break;
+							}
+						}
+					}
+
+					if (!isChanged && appropriateVertex != -1)
+					{
+						isChanged = true;
+						degrees[i]++;
+						degrees[appropriateVertex]++;
+						modifiedWeightedMatrix[i][appropriateVertex] = (mersenne() % 100) + 1;
+						if (m_mode == 1) modifiedWeightedMatrix[i][appropriateVertex] *= -1;
+						if (m_mode == 2) modifiedWeightedMatrix[i][appropriateVertex] *= std::pow(-1, mersenne() % 2);
+						modifiedWeightedMatrix[appropriateVertex][i] = modifiedWeightedMatrix[i][appropriateVertex];
+					}
+					
+					if (appropriateVertex == -1)
+					{
+						std::cout << "\nThis graph is not Eulerian and can't become such by adding edges.\n\n";
+						return;
+					}
+				}
+			}
+
+			if (!isChanged) isEulerian = true;
+		}
+		std::cout << "\nModified Eulerian Graph weighted matrix: \n";
+		showMatrix(modifiedWeightedMatrix);
+		std::cout << '\n';
+	}
+
+	// Find eulerian cycle
+	std::vector<int> eulerianCycle;
+	std::stack<int> vertexes;
+	vertexes.push(0);
+
+	while (!vertexes.empty())
+	{
+		int currentVertex = vertexes.top();
+		if (degrees[currentVertex] == 0)
+		{
+			vertexes.pop();
+			eulerianCycle.push_back(currentVertex);
+		}
+		else
+		{
+			for (int i = 0; i < m_vertexQuantity; i++)
+			{
+				if (modifiedWeightedMatrix[currentVertex][i] != 0)
+				{
+					vertexes.push(i);
+					degrees[i]--;
+					degrees[currentVertex]--;
+					modifiedWeightedMatrix[currentVertex][i] = 0;
+					modifiedWeightedMatrix[i][currentVertex] = 0;
+					break;
+				}
+			}
+		}
+	}
+
+	// Output eulerian cycle
+	std::cout << "\nSequence of vertexes of eulerian cycle: ";
+	for (int i = 0; i < eulerianCycle.size(); i++) std::cout << eulerianCycle[i] << ' ';
+	std::cout << "\n\n";
+}
+
+void Graph::hamilton()
+{
+
+}
+
 void Graph::Start()
 {
 	std::cout << "Matrix without weights:\n";
@@ -1096,7 +1245,9 @@ void Graph::Start()
 		std::cout << "12. Find number of Spanning trees using Kirchhoff's theorem.\n";
 		std::cout << "13. Code Spanning Tree using Prufer's code.\n";
 		std::cout << "14. Decode Prufer's code.\n";
-		std::cout << "15. End the program.\n";
+		std::cout << "15. Build Eulerian Cycle.\n";
+		std::cout << "16. Solve Commivoyager's problem.\n";
+		std::cout << "17. End the program.\n";
 
 		std::string input;
 		int operationNumber;
@@ -1106,7 +1257,7 @@ void Graph::Start()
 		{
 			std::cout << "Enter the operation number:\n";
 			std::cin >> input;
-			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 15)
+			if (IsOnlyDigits(input) && std::stoi(input) >= 0 && std::stoi(input) <= 17)
 			{
 				operationNumber = std::stoi(input);
 				isAssigned = true;
@@ -1288,6 +1439,12 @@ void Graph::Start()
 			decodePrufer();
 			break;
 		case 15:
+			euler();
+			break;
+		case 16:
+			hamilton();
+			break;
+		case 17:
 			return;
 		}
 	}
