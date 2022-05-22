@@ -1326,7 +1326,7 @@ void Graph::hamilton()
 	{
 		std::cout << minimumPath[i] << ' ';
 	}
-	std::cout << "Length:" << minimumLength << "\n\n";
+	std::cout << "Weight:" << minimumLength << "\n\n";
 
 	fout.close();
 }
@@ -1351,7 +1351,7 @@ void Graph::findHamiltoninanCycle(std::ofstream& fout, std::vector<std::vector<i
 			{
 				fout << path[i] << ' ';
 			}
-			fout << "Length:" << length << '\n';
+			fout << "Weight:" << length << '\n';
 
 			path.pop_back();
 		}
