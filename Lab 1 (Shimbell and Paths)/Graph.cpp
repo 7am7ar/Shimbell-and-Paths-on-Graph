@@ -826,7 +826,7 @@ int Graph::prim()
 			}
 		}
 	}
-	std::cout << "\nMinumum Spanning Tree Weight:" << resultSum << '\n';
+	std::cout << "\nMinimum Spanning Tree Weight:" << resultSum << '\n';
 	showMatrix(m_minimumSpanningTree);
 	return iterationCounter;
 }
@@ -1222,8 +1222,7 @@ void Graph::hamilton()
 
 	if (m_vertexQuantity == 2)
 	{
-		std::cout << "\nGraph is hamiltonian.\nList of Hamiltonian cycles is in file ListOfHamiltonianCycles.txt.\n\n";
-		fout << "Cycle: 0 1 0 Length: " << m_weightedMatrix[0][1];
+		std::cout << "\nGraph with two vertexes can not be hamiltonian.\n\n";
 		fout.close();
 		return;
 	}
@@ -1238,79 +1237,113 @@ void Graph::hamilton()
 	}
 
 	// Check for condition from theorem (if degree > p/2 => hamiltonian)
-	bool isHamiltonian = true;
-	std::vector<int> degrees(m_vertexQuantity, 0);
-	std::mt19937 mersenne(static_cast<unsigned int>(time(0)));
-
-	for (int i = 0; i < m_vertexQuantity; i++)
+	if (m_vertexQuantity == 3)
 	{
-		for (int j = 0; j < m_vertexQuantity; j++)
+		bool isHamiltonian = true;
+		std::mt19937 mersenne(static_cast<unsigned int>(time(0)));
+
+		for (int i = 0; i < m_vertexQuantity; i++)
 		{
-			if (modifiedWeightedMatrix[i][j] != 0) degrees[i]++;
-		}
-		if (degrees[i] < (m_vertexQuantity / 2))
-		{
-			isHamiltonian = false;
-		}
-	}
-
-	// If not hamiltonian, add edges to make it hamiltonian
-
-	if (isHamiltonian) std::cout << "\nGraph is Hamiltonian.\n";
-	else
-	{
-		std::cout << "\nGraph may not be Hamiltonian.\n";
-
-		while (!isHamiltonian)
-		{
-			bool isChanged = false;
-
-			for (int i = 0; i < m_vertexQuantity; i++)
+			for (int j = 0; j < m_vertexQuantity; j++)
 			{
-				if (degrees[i] < (m_vertexQuantity / 2))
+				if (i != j && modifiedWeightedMatrix[i][j] == 0)
 				{
-					// Add edges make degree appropriate according to condition
-					int appropriateVertex = -1;
-
-					for (int j = 0; j < m_vertexQuantity; j++)
-					{
-						if (modifiedWeightedMatrix[i][j] == 0 && i != j)
-						{
-							if (appropriateVertex == -1) appropriateVertex = j;
-
-							if (degrees[j] < (m_vertexQuantity / 2))
-							{
-								isChanged = true;
-								degrees[i]++;
-								degrees[j]++;
-								modifiedWeightedMatrix[i][j] = (mersenne() % 100) + 1;
-								if (m_mode == 1) modifiedWeightedMatrix[i][j] *= -1;
-								if (m_mode == 2) modifiedWeightedMatrix[i][j] *= std::pow(-1, mersenne() % 2);
-								modifiedWeightedMatrix[j][i] = modifiedWeightedMatrix[i][j];
-								break;
-							}
-						}
-					}
-
-					if (!isChanged && appropriateVertex != -1)
-					{
-						isChanged = true;
-						degrees[i]++;
-						degrees[appropriateVertex]++;
-						modifiedWeightedMatrix[i][appropriateVertex] = (mersenne() % 100) + 1;
-						if (m_mode == 1) modifiedWeightedMatrix[i][appropriateVertex] *= -1;
-						if (m_mode == 2) modifiedWeightedMatrix[i][appropriateVertex] *= std::pow(-1, mersenne() % 2);
-						modifiedWeightedMatrix[appropriateVertex][i] = modifiedWeightedMatrix[i][appropriateVertex];
-					}
+					isHamiltonian = false;
+					modifiedWeightedMatrix[i][j] = (mersenne() % 100) + 1;
+					if (m_mode == 1) modifiedWeightedMatrix[i][j] *= -1;
+					if (m_mode == 2) modifiedWeightedMatrix[i][j] *= std::pow(-1, mersenne() % 2);
+					modifiedWeightedMatrix[j][i] = modifiedWeightedMatrix[i][j];
 				}
 			}
+		}
+		if (!isHamiltonian)
+		{
+			std::cout << "\nGraph may not be Hamiltonian.\n";
+			std::cout << "\nModified Hamiltonian Graph weighted matrix: \n";
+			showMatrix(modifiedWeightedMatrix);
+			std::cout << '\n';
+		}
+		else
+		{
+			std::cout << "\nGraph is Hamiltonian.\n";
+		}
+	}
+	else
+	{
+		bool isHamiltonian = true;
+		std::vector<int> degrees(m_vertexQuantity, 0);
+		std::mt19937 mersenne(static_cast<unsigned int>(time(0)));
 
-			if (!isChanged) isHamiltonian = true;
+		for (int i = 0; i < m_vertexQuantity; i++)
+		{
+			for (int j = 0; j < m_vertexQuantity; j++)
+			{
+				if (modifiedWeightedMatrix[i][j] != 0) degrees[i]++;
+			}
+			if (degrees[i] < (m_vertexQuantity / 2))
+			{
+				isHamiltonian = false;
+			}
 		}
 
-		std::cout << "\nModified Hamiltonian Graph weighted matrix: \n";
-		showMatrix(modifiedWeightedMatrix);
-		std::cout << '\n';
+		// If not hamiltonian, add edges to make it hamiltonian
+
+		if (isHamiltonian) std::cout << "\nGraph is Hamiltonian.\n";
+		else
+		{
+			std::cout << "\nGraph may not be Hamiltonian.\n";
+
+			while (!isHamiltonian)
+			{
+				bool isChanged = false;
+
+				for (int i = 0; i < m_vertexQuantity; i++)
+				{
+					if (degrees[i] < (m_vertexQuantity / 2))
+					{
+						// Add edges make degree appropriate according to condition
+						int appropriateVertex = -1;
+
+						for (int j = 0; j < m_vertexQuantity; j++)
+						{
+							if (modifiedWeightedMatrix[i][j] == 0 && i != j)
+							{
+								if (appropriateVertex == -1) appropriateVertex = j;
+
+								if (degrees[j] < (m_vertexQuantity / 2))
+								{
+									isChanged = true;
+									degrees[i]++;
+									degrees[j]++;
+									modifiedWeightedMatrix[i][j] = (mersenne() % 100) + 1;
+									if (m_mode == 1) modifiedWeightedMatrix[i][j] *= -1;
+									if (m_mode == 2) modifiedWeightedMatrix[i][j] *= std::pow(-1, mersenne() % 2);
+									modifiedWeightedMatrix[j][i] = modifiedWeightedMatrix[i][j];
+									break;
+								}
+							}
+						}
+
+						if (!isChanged && appropriateVertex != -1)
+						{
+							isChanged = true;
+							degrees[i]++;
+							degrees[appropriateVertex]++;
+							modifiedWeightedMatrix[i][appropriateVertex] = (mersenne() % 100) + 1;
+							if (m_mode == 1) modifiedWeightedMatrix[i][appropriateVertex] *= -1;
+							if (m_mode == 2) modifiedWeightedMatrix[i][appropriateVertex] *= std::pow(-1, mersenne() % 2);
+							modifiedWeightedMatrix[appropriateVertex][i] = modifiedWeightedMatrix[i][appropriateVertex];
+						}
+					}
+				}
+
+				if (!isChanged) isHamiltonian = true;
+			}
+
+			std::cout << "\nModified Hamiltonian Graph weighted matrix: \n";
+			showMatrix(modifiedWeightedMatrix);
+			std::cout << '\n';
+		}
 	}
 
 	// Find all hamiltonian cycles
@@ -1318,7 +1351,7 @@ void Graph::hamilton()
 	path.push_back(0);
 	std::vector<int> minimumPath;
 	int length = 0;
-	int minimumLength = 0;
+	int minimumLength = INT_MAX;
 
 	findHamiltoninanCycle(fout, modifiedWeightedMatrix, path, length, minimumPath, minimumLength);
 
