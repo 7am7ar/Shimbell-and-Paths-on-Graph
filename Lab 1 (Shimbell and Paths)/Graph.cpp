@@ -219,7 +219,7 @@ void Graph::shimbellMethod(int edgeQuantity, bool mode)
 	}
 
 	std::cout << "Shimbell method results:\n";
-	showWeights(shimbellMatrix);
+	showMatrix(shimbellMatrix);
 }
 
 int Graph::dfs(int firstVertex, int secondVertex)
@@ -379,7 +379,7 @@ int Graph::bellmanFord(int startVertex)
 	return iterationCounter;
 }
 
-int Graph::floydWarshall(int startVertex)
+int Graph::floydWarshall()
 {
 	int iterationCounter = 0;
 	std::vector<std::vector<int>> distance;
@@ -1410,9 +1410,10 @@ void Graph::findHamiltoninanCycle(std::ofstream& fout, std::vector<std::vector<i
 
 				if (!isInPath)
 				{
-					length += graph[path[path.size() - 1]][i];
+					int newLength = length + graph[path[path.size() - 1]][i];
 					path.push_back(i);
-					findHamiltoninanCycle(fout, graph, path, length, minimumPath, minimumLength);
+					findHamiltoninanCycle(fout, graph, path, newLength, minimumPath, minimumLength);
+					//length -= graph[path[path.size() - 1]][i];
 					path.pop_back();
 				}
 			}
@@ -1575,7 +1576,7 @@ void Graph::Start()
 			}
 			break;
 		case 6:
-			floydWarshall(0);
+			floydWarshall();
 			break;
 		case 7:
 			showMatrix(m_weightedMatrix);

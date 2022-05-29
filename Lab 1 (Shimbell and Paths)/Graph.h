@@ -10,7 +10,7 @@ private:
 	int dijkstra(int startVertex);
 	void createGraph(int vertexQuantity);
 	int bellmanFord(int startVertex);
-	int floydWarshall(int startVertex);
+	int floydWarshall();
 	void shimbellMethod(int edgeQuantity, bool mode);
 	void showMatrix(std::vector<std::vector<int>>& matrix);
 	void showWeights(std::vector<std::vector<int>>& matrix);
